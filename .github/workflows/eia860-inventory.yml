@@ -10,12 +10,16 @@ on:
       - 'tests/test_eia860.py'
       - 'tests/test_download_eia860.py'
       - '.github/workflows/eia860-inventory.yml'
+      - 'src/grid_resilience/nameplate_audit.py'
+      - 'tests/test_nameplate_audit.py'
 jobs:
   validate-inventory:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     permissions:
       contents: read
+    env:
+      EIA_API_KEY: ${{ secrets.EIA_API_KEY }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -27,6 +31,14 @@ jobs:
         run: python -m pytest -q
       - name: Download and validate official EIA-860 2024
         run: python -m grid_resilience.run_eia860
+      - name: Retrieve matching observed demand (if API key configured)
+        if: env.EIA_API_KEY != ''
+        run: |
+          python -m grid_resilience.eia_api --start 2024-07-01 --end 2024-07-08 --output data/processed/eia930_api_demand.csv
+      - name: Audit actual nameplate against EIA observed peak demand
+        if: env.EIA_API_KEY != ''
+        run: |
+          python -m grid_resilience.nameplate_audit --capacity-csv data/processed/eia860/eia860_ba_technology_capacity.csv --demand-csv data/processed/eia930_api_demand.csv --start 2024-07-01 --end 2024-07-08 --output outputs/nameplate_audit
       - name: Upload inventory and provenance
         if: always()
         uses: actions/upload-artifact@v4
@@ -37,3 +49,4 @@ jobs:
           path: |
             data/external/eia860_2024/download_manifest.json
             data/processed/eia860/
+            outputs/nameplate_audit/

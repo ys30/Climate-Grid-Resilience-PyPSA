@@ -10,6 +10,8 @@ on:
       - 'src/grid_resilience/eia860.py'
       - 'src/grid_resilience/download_eia860.py'
       - 'src/grid_resilience/eia_api.py'
+      - 'src/grid_resilience/model_comparison.py'
+      - 'tests/test_model_comparison.py'
 jobs:
   partial-nameplate:
     runs-on: ubuntu-24.04
@@ -67,6 +69,19 @@ jobs:
             --start 2024-07-01 --end 2024-07-08 \
             --output outputs/eia860_partial_nameplate \
             --cache data/cache
+      - name: Solve matched hypothetical-capacity reference with identical weather
+        run: |
+          python -m grid_resilience.western_us \
+            --eia-csv data/processed/eia930_api_demand.csv \
+            --start 2024-07-01 --end 2024-07-08 \
+            --output outputs/matched_synthetic_reference \
+            --cache data/cache
+      - name: Compare matched synthetic and EIA-860 partial-nameplate scenarios
+        run: |
+          python -m grid_resilience.model_comparison \
+            --synthetic outputs/matched_synthetic_reference/metrics.csv \
+            --partial-nameplate outputs/eia860_partial_nameplate/metrics.csv \
+            --output outputs/model_comparison
       - name: Build scenario report
         run: python -m grid_resilience.report --output outputs/eia860_partial_nameplate
       - name: Upload reproducible diagnostics and scenarios even if later steps fail
@@ -83,3 +98,5 @@ jobs:
             data/processed/eia930_api_demand*.json
             outputs/partial_nameplate_audit/
             outputs/eia860_partial_nameplate/
+            outputs/matched_synthetic_reference/
+            outputs/model_comparison/

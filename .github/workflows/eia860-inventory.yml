@@ -1,6 +1,15 @@
 name: EIA-860 2024 official inventory validation
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'src/grid_resilience/eia860.py'
+      - 'src/grid_resilience/download_eia860.py'
+      - 'src/grid_resilience/run_eia860.py'
+      - 'tests/test_eia860.py'
+      - 'tests/test_download_eia860.py'
+      - '.github/workflows/eia860-inventory.yml'
 jobs:
   validate-inventory:
     runs-on: ubuntu-24.04

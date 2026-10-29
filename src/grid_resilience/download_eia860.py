@@ -29,7 +29,7 @@ def obtain(destination, source_url=URL):
         for typ, marker in (("generators", "3_1_Generator2024"),
                             ("plants", "2___Plant2024")):
             matching = [name for name in z.namelist()
-                        if re.sub(r"[^a-z0-9]", "", marker.casefold()) in re.sub(r"[^a-z0-9]", "", Path(name).stem.casefold())
+                        if re.search(r"^(31generator|2plant)y?2024$", re.sub(r"[^a-z0-9]", "", Path(name).stem.casefold())) and ((typ == "generators" and "generator" in Path(name).stem.casefold()) or (typ == "plants" and "plant" in Path(name).stem.casefold()))
                         and name.lower().endswith((".xlsx", ".xlsm", ".xls"))]
             if len(matching) != 1:
                 raise ValueError(f"Expected one {marker} workbook, found {matching}")

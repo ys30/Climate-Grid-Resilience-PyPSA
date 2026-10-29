@@ -12,6 +12,8 @@ on:
       - '.github/workflows/eia860-inventory.yml'
       - 'src/grid_resilience/nameplate_audit.py'
       - 'tests/test_nameplate_audit.py'
+      - 'src/grid_resilience/capacity_adapter.py'
+      - 'tests/test_capacity_adapter_guard.py'
 jobs:
   validate-inventory:
     runs-on: ubuntu-24.04

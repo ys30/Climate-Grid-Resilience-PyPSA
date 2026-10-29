@@ -9,6 +9,7 @@ on:
       - 'tests/test_three_vs_four_ba.py'
       - 'src/grid_resilience/select_capacity_bas.py'
       - 'tests/test_select_capacity_bas.py'
+      - 'src/grid_resilience/western_us.py'
 jobs:
   compare:
     runs-on: ubuntu-24.04
@@ -40,6 +41,11 @@ jobs:
       - name: Download observed four-BA demand
         run: |
           python -m grid_resilience.eia_api --bas CISO AZPS BPAT SRP --start 2024-07-01 --end 2024-07-08 --output data/processed/four_ba_demand.csv
+      - name: Cache ERA5 downloads across runs
+        uses: actions/cache@v4
+        with:
+          path: data/cache
+          key: era5-western-us-2024-07-v1
       - name: Matched three-BA EIA-860 generator-only solve
         run: |
           python -m grid_resilience.western_us --eia-csv data/processed/four_ba_demand.csv --eia860-capacities data/processed/three_ba_matched_nameplate.csv --start 2024-07-01 --end 2024-07-08 --output outputs/matched_three_ba --cache data/cache

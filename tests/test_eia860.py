@@ -37,3 +37,36 @@ def test_eia860_operable_op_only(tmp_path):
     assert len(out) == 3
     assert out.capacity_mw.sum() == 600
     assert set(out.technology) == {"thermal", "solar", "wind"}
+
+
+def test_eia860_ignores_blank_plant_inventory_rows(tmp_path):
+    generators = tmp_path / "3_1_Generator2024.xlsx"
+    plants = tmp_path / "2___Plant2024.xlsx"
+    pd.DataFrame({
+        "Plant Code": [1, 2], "Generator ID": ["A", "B"],
+        "Nameplate Capacity (MW)": [100, 20],
+        "Energy Source 1": ["NG", "NG"],
+        "Status": ["OP", "SB"],
+    }).to_excel(generators, sheet_name="Operable", index=False)
+    pd.DataFrame({
+        "Plant Code": [1, None],
+        "Balancing Authority Code": ["CISO", None],
+    }).to_excel(plants, index=False)
+    out = read_860(generators, plants)
+    assert len(out) == 1
+    assert out.capacity_mw.iloc[0] == 100
+
+
+def test_eia860_rejects_operating_generator_without_plant_id(tmp_path):
+    generators = tmp_path / "3_1_Generator2024.xlsx"
+    plants = tmp_path / "2___Plant2024.xlsx"
+    pd.DataFrame({
+        "Plant Code": [None], "Generator ID": ["A"],
+        "Nameplate Capacity (MW)": [100],
+        "Energy Source 1": ["NG"], "Status": ["OP"],
+    }).to_excel(generators, sheet_name="Operable", index=False)
+    pd.DataFrame({
+        "Plant Code": [1], "Balancing Authority Code": ["CISO"],
+    }).to_excel(plants, index=False)
+    with pytest.raises(ValueError, match="Operating generators missing valid Plant Code"):
+        read_860(generators, plants)

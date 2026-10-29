@@ -19,6 +19,10 @@ FUEL_TECH = {
     "KER": "thermal", "PC": "thermal", "WO": "thermal",
     "BFG": "thermal", "OG": "thermal", "OBG": "thermal",
     "LFG": "thermal", "MSW": "thermal", "GEO": "geothermal",
+    "MWH": "storage", "PUR": "storage", "WH": "hydro",
+    "BLQ": "thermal", "SLW": "thermal", "TDF": "thermal",
+    "AB": "thermal", "OBS": "thermal", "WDS": "thermal",
+    "OTH": "other", "OT": "other",
 }
 # These are source codes, not an exhaustive or physically exact technology taxonomy.
 # Unmapped fuel categories fail closed instead of being silently dropped.
@@ -85,6 +89,7 @@ def read_860(operable_xlsx, plant_xlsx, year=2024, return_unassigned=False):
     # BA assignment can be missing in a nationwide plant workbook. Never
     # assign such rows to a western BA by guesswork or count their capacity.
     rows = rows.loc[rows.ba.astype("string").str.strip().isin(BA_CODES).fillna(False)].copy()
+    rows["ba"] = rows.ba.astype("string").str.strip().str.upper()
     rows["capacity_mw"] = pd.to_numeric(rows.capacity_mw, errors="raise")
     if rows.capacity_mw.isna().any() or (rows.capacity_mw <= 0).any():
         raise ValueError("Operating generator capacity must be positive")
@@ -120,6 +125,7 @@ def export_860(operable_xlsx, plant_xlsx, output, year=2024):
         "unassigned_operating_generator_count": int(len(unassigned)),
         "ba_assignment_complete_nationwide": bool(unassigned.empty),
         "coverage_warning": "Unassigned units excluded; coverage of target BAs cannot be guaranteed without resolving them" if len(unassigned) else None,
+        "storage_warning": "Storage nameplate MW is not dispatchable energy; energy capacity, efficiency, and SOC must be separately sourced",
         "capacity_metric": "EIA-860 nameplate MW, NOT hourly available power",
         "scope": list(BA_CODES),
         "technology_mapping": FUEL_TECH,

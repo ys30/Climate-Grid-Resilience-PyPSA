@@ -1,0 +1,85 @@
+name: Western US EIA-860 partial nameplate climate screening
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/eia860-partial-solve.yml'
+      - 'src/grid_resilience/western_us.py'
+      - 'src/grid_resilience/capacity_projection.py'
+      - 'src/grid_resilience/eia860.py'
+      - 'src/grid_resilience/download_eia860.py'
+      - 'src/grid_resilience/eia_api.py'
+jobs:
+  partial-nameplate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    env:
+      EIA_API_KEY: ${{ secrets.EIA_API_KEY }}
+      MPLBACKEND: Agg
+      OPENBLAS_NUM_THREADS: '1'
+      OMP_NUM_THREADS: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - name: Install and run tests
+        run: |
+          python -m pip install -e '.[dev,model]'
+          python -m pytest -q
+      - name: Validate EIA API credential
+        run: |
+          if [ -z "$EIA_API_KEY" ]; then
+            echo "EIA_API_KEY missing: cannot download actual hourly demand"
+            exit 1
+          fi
+      - name: Download and audit EIA-860 source data
+        run: python -m grid_resilience.run_eia860
+      - name: Create auditable generator-only projection
+        run: |
+          python -m grid_resilience.capacity_projection \
+            --source data/processed/eia860/eia860_ba_technology_capacity.csv \
+            --output data/processed/eia860_projection
+      - name: Load observed EIA-930 hourly demand
+        run: |
+          python -m grid_resilience.eia_api \
+            --start 2024-07-01 --end 2024-07-08 \
+            --output data/processed/eia930_api_demand.csv
+      - name: Audit capacity coverage and comparable peak load
+        run: |
+          python -m grid_resilience.capacity_coverage \
+            --capacity-csv data/processed/eia860/eia860_ba_technology_capacity.csv \
+            --output outputs/partial_nameplate_audit
+          python -m grid_resilience.nameplate_audit \
+            --capacity-csv data/processed/eia860/eia860_ba_technology_capacity.csv \
+            --demand-csv data/processed/eia930_api_demand.csv \
+            --start 2024-07-01 --end 2024-07-08 \
+            --output outputs/partial_nameplate_audit
+      - name: Solve three assumed-weather scenarios with 2024 year-end partial nameplate
+        run: |
+          python -m grid_resilience.western_us \
+            --eia-csv data/processed/eia930_api_demand.csv \
+            --eia860-capacities data/processed/eia860_projection/modeled_nameplate_only.csv \
+            --start 2024-07-01 --end 2024-07-08 \
+            --output outputs/eia860_partial_nameplate \
+            --cache data/cache
+      - name: Build scenario report
+        run: python -m grid_resilience.report --output outputs/eia860_partial_nameplate
+      - name: Upload reproducible diagnostics and scenarios even if later steps fail
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: western-us-eia860-partial-nameplate
+          if-no-files-found: warn
+          retention-days: 30
+          path: |
+            data/external/eia860_2024/download_manifest.json
+            data/processed/eia860/
+            data/processed/eia860_projection/
+            data/processed/eia930_api_demand*.json
+            outputs/partial_nameplate_audit/
+            outputs/eia860_partial_nameplate/

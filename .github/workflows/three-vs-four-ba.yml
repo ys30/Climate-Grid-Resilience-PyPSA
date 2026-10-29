@@ -7,6 +7,8 @@ on:
       - '.github/workflows/three-vs-four-ba.yml'
       - 'src/grid_resilience/three_vs_four_ba.py'
       - 'tests/test_three_vs_four_ba.py'
+      - 'src/grid_resilience/select_capacity_bas.py'
+      - 'tests/test_select_capacity_bas.py'
 jobs:
   compare:
     runs-on: ubuntu-24.04
@@ -29,12 +31,18 @@ jobs:
       - name: Four-BA generator-only projection
         run: |
           python -m grid_resilience.capacity_projection --bas CISO AZPS BPAT SRP --source data/processed/eia860_four_ba/eia860_ba_technology_capacity.csv --output data/processed/four_ba_projection
+      - name: Explicitly select three-BA capacities from same four-BA EIA inventory
+        run: |
+          python -m grid_resilience.select_capacity_bas \
+            --source data/processed/four_ba_projection/modeled_nameplate_only.csv \
+            --bas CISO AZPS BPAT \
+            --output data/processed/three_ba_matched_nameplate.csv
       - name: Download observed four-BA demand
         run: |
           python -m grid_resilience.eia_api --bas CISO AZPS BPAT SRP --start 2024-07-01 --end 2024-07-08 --output data/processed/four_ba_demand.csv
       - name: Matched three-BA EIA-860 generator-only solve
         run: |
-          python -m grid_resilience.western_us --eia-csv data/processed/four_ba_demand.csv --eia860-capacities data/processed/four_ba_projection/modeled_nameplate_only.csv --start 2024-07-01 --end 2024-07-08 --output outputs/matched_three_ba --cache data/cache
+          python -m grid_resilience.western_us --eia-csv data/processed/four_ba_demand.csv --eia860-capacities data/processed/three_ba_matched_nameplate.csv --start 2024-07-01 --end 2024-07-08 --output outputs/matched_three_ba --cache data/cache
       - name: Matched four-BA EIA-860 generator-only solve
         run: |
           python -m grid_resilience.four_ba --demand-csv data/processed/four_ba_demand.csv --capacities data/processed/four_ba_projection/modeled_nameplate_only.csv --start 2024-07-01 --end 2024-07-08 --output outputs/matched_four_ba --cache data/cache
@@ -55,3 +63,5 @@ jobs:
             outputs/matched_four_ba/provenance.json
             outputs/three_vs_four_ba/
             data/processed/eia860_four_ba/inventory_audit.json
+            data/processed/three_ba_matched_nameplate.csv
+            data/processed/three_ba_matched_nameplate.provenance.json

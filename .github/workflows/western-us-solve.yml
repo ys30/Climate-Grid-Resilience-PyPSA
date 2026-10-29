@@ -1,0 +1,63 @@
+name: Western US climate-grid screening solve
+on:
+  workflow_dispatch:
+    inputs:
+      start:
+        description: UTC start (historical)
+        required: true
+        default: '2024-07-01'
+      end:
+        description: Exclusive UTC end
+        required: true
+        default: '2024-07-08'
+jobs:
+  solve-western-us:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    env:
+      EIA_API_KEY: ${{ secrets.EIA_API_KEY }}
+      MPLBACKEND: Agg
+      OPENBLAS_NUM_THREADS: '1'
+      OMP_NUM_THREADS: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - run: python -m pip install -e '.[dev,model]'
+      - name: Run tests before downloading observations
+        run: python -m pytest -q
+      - name: Validate secret availability
+        shell: bash
+        run: |
+          if [ -z "$EIA_API_KEY" ]; then
+            echo "EIA_API_KEY GitHub Actions secret is required"
+            exit 1
+          fi
+      - name: Fetch observed BA-level hourly demand
+        run: |
+          python -m grid_resilience.eia_api \
+            --start "${{ inputs.start }}" --end "${{ inputs.end }}" \
+            --output data/processed/eia930_api_demand.csv
+      - name: Solve screening model with ERA5 weather and assumed grid parameters
+        run: |
+          python -m grid_resilience.western_us \
+            --eia-csv data/processed/eia930_api_demand.csv \
+            --start "${{ inputs.start }}" --end "${{ inputs.end }}" \
+            --output outputs/western_us --cache data/cache
+      - name: Generate regional resilience tables and plots
+        run: python -m grid_resilience.report --output outputs/western_us
+      - name: Upload reproducible modeling inputs and outputs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: western-us-climate-grid-screening
+          if-no-files-found: warn
+          retention-days: 30
+          path: |
+            data/processed/eia930_api_demand.csv
+            data/processed/eia930_api_demand_provenance.json
+            outputs/western_us/

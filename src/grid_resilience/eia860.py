@@ -61,16 +61,29 @@ def read_860(operable_xlsx, plant_xlsx, year=2024):
     rows.columns = ["plant_id", "generator_id", "capacity_mw", "fuel", "status"]
     plants = p[[plant_p, ba_p]].copy()
     plants.columns = ["plant_id", "ba"]
-    plants["plant_id"] = pd.to_numeric(plants.plant_id, errors="raise").astype(int)
-    rows["plant_id"] = pd.to_numeric(rows.plant_id, errors="raise").astype(int)
+    # Official spreadsheets may contain trailing blank rows, metadata and inactive
+    # records without plant IDs. Never discard genuine OP records silently.
+    plants = plants.dropna(how="all").copy()
+    rows = rows.dropna(how="all").copy()
+    rows["status"] = rows.status.astype("string").str.strip().str.upper()
+    rows = rows.loc[rows.status.eq("OP").fillna(False)].copy()
+    plants["plant_id"] = pd.to_numeric(plants.plant_id, errors="coerce")
+    rows["plant_id"] = pd.to_numeric(rows.plant_id, errors="coerce")
+    if rows.plant_id.isna().any():
+        raise ValueError(f"Operating generators missing valid Plant Code: {int(rows.plant_id.isna().sum())}")
+    # Null plant IDs in the plant inventory cannot identify a plant; exclude,
+    # but require every operating generator in the chosen BAs to be mapped.
+    plants = plants.dropna(subset=["plant_id"]).copy()
+    if ((plants.plant_id % 1) != 0).any() or ((rows.plant_id % 1) != 0).any():
+        raise ValueError("Noninteger EIA Plant Code detected")
+    plants["plant_id"] = plants.plant_id.astype("int64")
+    rows["plant_id"] = rows.plant_id.astype("int64")
     if plants.plant_id.duplicated().any():
         raise ValueError("Duplicated plant ID in plant spreadsheet")
     rows = rows.merge(plants, on="plant_id", how="left", validate="many_to_one")
     if rows.ba.isna().any():
-        raise ValueError("Missing plant BA assignment; inspect EIA source records")
+        raise ValueError("Missing plant BA assignment for operating generator")
     rows = rows[rows.ba.astype(str).str.strip().isin(BA_CODES)].copy()
-    rows["status"] = rows.status.astype(str).str.strip().str.upper()
-    rows = rows[rows.status.eq("OP")].copy()
     rows["capacity_mw"] = pd.to_numeric(rows.capacity_mw, errors="raise")
     if rows.capacity_mw.isna().any() or (rows.capacity_mw <= 0).any():
         raise ValueError("Operating generator capacity must be positive")

@@ -9,6 +9,8 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import time
+import socket
 from pathlib import Path
 from urllib.parse import urlencode
 from urllib.request import urlopen
@@ -94,9 +96,26 @@ def fetch_era5(start, end, cache_dir, bas=BAS):
                           end_date=end_inclusive, hourly=",".join(WEATHER),
                           models="era5", timezone="GMT")
             url = "https://archive-api.open-meteo.com/v1/archive?" + urlencode(params)
-            with urlopen(url, timeout=90) as response:
-                blob = response.read()
-            path.write_bytes(blob)
+            last_error = None
+            for attempt in range(1, 5):
+                try:
+                    with urlopen(url, timeout=120) as response:
+                        blob = response.read()
+                    candidate = json.loads(blob)
+                    if "hourly" not in candidate:
+                        raise ValueError(f"ERA5 {ba}: missing hourly data in API response")
+                    # Write only a complete, valid response to the reusable cache.
+                    temporary = path.with_suffix(".json.tmp")
+                    temporary.write_bytes(blob)
+                    temporary.replace(path)
+                    last_error = None
+                    break
+                except (OSError, TimeoutError, socket.timeout) as exc:
+                    last_error = exc
+                    if attempt < 4:
+                        time.sleep(min(2 ** attempt, 12))
+            if last_error is not None:
+                raise RuntimeError(f"ERA5 {ba}: 4 attempts failed; last transport error: {last_error}") from last_error
         obj = json.loads(path.read_text())
         if "hourly" not in obj:
             raise ValueError(f"ERA5 response missing hourly data for {ba}: {obj}")

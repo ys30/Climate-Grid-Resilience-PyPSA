@@ -46,6 +46,18 @@ def load_eia930(path, start, end):
     are rejected rather than choosing one silently.
     """
     data = pd.read_csv(path, low_memory=False)
+    if {"timestamp", *BAS}.issubset(data.columns):
+        dates = pd.to_datetime(data["timestamp"], utc=True, errors="raise")
+        if dates.duplicated().any():
+            raise ValueError("Duplicate hourly timestamps in API file")
+        frame = data[list(BAS)].apply(pd.to_numeric, errors="raise")
+        frame.index = dates
+        idx = pd.date_range(pd.Timestamp(start, tz="UTC"),
+                            pd.Timestamp(end, tz="UTC"), freq="h", inclusive="left")
+        result = frame.reindex(idx)
+        if result.isna().any().any() or (result <= 0).any().any():
+            raise ValueError("Incomplete or invalid EIA API load series")
+        return result
     ba = _column(data, "Balancing Authority", "Balancing Authority Code", "ba")
     t = _column(data, "UTC Time", "datetime_utc", "timestamp")
     demand = _column(data, "Demand (MW)", "demand_mw", "Demand")
@@ -196,7 +208,7 @@ def run(eia_csv, start, end, output="outputs/western_us", cache="data/cache",
         "source_eia930_sha256": source_sha,
         "source_weather": "Open-Meteo archive ERA5 (models=era5)",
         "start_utc": start, "end_exclusive_utc": end,
-        "hour_ending_to_hour_start": True,
+        "hour_ending_to_hour_start": "CSV BALANCE only; EIA API timestamp is already hour-start",
         "grid_parameters": "hypothetical topology, capacities, mix, operating costs",
         "reserve_margin_assumed": reserve_margin,
         "intertie_fraction_assumed": intertie_fraction,

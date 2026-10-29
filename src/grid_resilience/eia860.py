@@ -22,7 +22,7 @@ FUEL_TECH = {
     "MWH": "storage", "PUR": "storage", "WH": "hydro",
     "BLQ": "thermal", "SLW": "thermal", "TDF": "thermal",
     "AB": "thermal", "OBS": "thermal", "WDS": "thermal",
-    "OTH": "other", "OT": "other",
+    "OTH": "other", "OT": "other", "PG": "thermal",
 }
 # These are source codes, not an exhaustive or physically exact technology taxonomy.
 # Unmapped fuel categories fail closed instead of being silently dropped.

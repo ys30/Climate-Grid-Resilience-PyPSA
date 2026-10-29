@@ -27,7 +27,7 @@ def render(root="."):
     coverage = required["coverage"]
     if coverage.is_file():
         frame = pd.read_csv(coverage)
-        lines.extend(["", "### Nameplate coverage", "", frame.to_markdown(index=False)])
+        lines.extend(["", "### Nameplate coverage", "", "```csv\\n" + frame.to_csv(index=False).strip() + "\\n```"])
     comparison = required["comparison"]
     if comparison.is_file():
         frame = pd.read_csv(comparison)

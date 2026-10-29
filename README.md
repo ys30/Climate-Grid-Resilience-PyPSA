@@ -114,3 +114,14 @@ The secret-safe collector in `src/grid_resilience/eia_api.py` retrieves EIA's pu
 [Run the manual GitHub Actions EIA data workflow](https://github.com/ys30/Climate-Grid-Resilience-PyPSA/actions/workflows/eia-data.yml) after configuring repository secret `EIA_API_KEY`. This workflow produces validated observed-demand and provenance artifacts, but **does not yet perform an end-to-end PyPSA empirical solve**. No API key is committed to the repository. The API input must be used with explicitly sourced EIA-860 capacities and actual network limits before making real-grid reliability claims.
 
 EIA API documentation: https://www.eia.gov/opendata/documentation.php
+
+
+## Phase 4 — end-to-end observed-demand / ERA5 screening solve
+
+[Western US solve workflow](https://github.com/ys30/Climate-Grid-Resilience-PyPSA/actions/workflows/western-us-solve.yml) can be started manually using the existing EIA_API_KEY repository secret. The default window is July 1–8, 2024 UTC. It installs PyPSA and HiGHS, runs tests, fetches official EIA v2 hourly demand (CISO, AZPS, BPAT), fetches ERA5 weather via Open-Meteo, solves three climate stress scenarios, summarizes regional and system shortfalls, and uploads datasets, metrics, provenance and NetCDF outputs.
+
+Outputs include hourly_unserved.csv, metrics.csv, system_metrics.csv, modeled_unserved_power.png, modeled_unserved_energy.png, solved_*.nc. The system shortage-hours measure counts hours in which *any* BA has a shortfall, unlike the sum of BA shortage hours.
+
+**Evidence warning:** This is a weather/observed-load-driven **screening experiment**, not WECC-calibrated adequacy modeling. The workflow does not yet download EIA-860 capacity spreadsheets; if no preprocessed EIA-860 capacity file is supplied to the CLI, it runs with explicitly invented capacity shares and intertie limits. +4 °C is an illustrative counterfactual. It does not estimate actual outages or probabilities. GitHub Actions succeeding means a valid executable analysis, not external validation of model assumptions.
+
+The EIA key remains in GitHub Actions secrets and is not printed. Weather and energy raw sources are downloaded as part of a workflow run, with outputs collected as workflow artifacts. Historical event benchmarking against observed interchange and realistic generator availability remains required.

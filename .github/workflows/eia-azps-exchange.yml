@@ -12,6 +12,9 @@ on:
       - 'src/grid_resilience/srp_azps_audit.py'
       - 'tests/test_srp_azps_audit.py'
       - 'src/grid_resilience/eia_api.py'
+      - 'src/grid_resilience/eia_net_generation.py'
+      - 'src/grid_resilience/azps_generation_reconciliation.py'
+      - 'tests/test_generation_reconciliation.py'
 jobs:
   exchange-audit:
     runs-on: ubuntu-24.04
@@ -43,6 +46,15 @@ jobs:
       - name: Validate SRP demand and AZPS bilateral exchange alignment
         run: |
           python -m grid_resilience.srp_azps_audit --demand-csv data/processed/srp_azps_demand.csv --exchange-csv data/processed/azps_exchange.csv --output outputs/srp_azps
+      - name: Download independently reported AZPS and SRP net generation
+        run: |
+          python -m grid_resilience.eia_net_generation --start 2024-07-01 --end 2024-07-08 --bas AZPS SRP --output data/processed/azps_srp_reported_ng.csv
+      - name: Reconcile AZPS demand and reported net generation
+        run: |
+          python -m grid_resilience.azps_generation_reconciliation \
+            --balance-csv outputs/azps_observed_balance/azps_hourly_demand_import_balance.csv \
+            --generation-csv data/processed/azps_srp_reported_ng.csv \
+            --output outputs/azps_generation_reconciliation
       - name: Upload observed exchanges and provenance
         if: always()
         uses: actions/upload-artifact@v4
@@ -58,3 +70,6 @@ jobs:
             outputs/azps_observed_balance/
             data/processed/srp_azps_demand_provenance.json
             outputs/srp_azps/
+            data/processed/azps_srp_reported_ng.csv
+            data/processed/azps_srp_reported_ng.provenance.json
+            outputs/azps_generation_reconciliation/

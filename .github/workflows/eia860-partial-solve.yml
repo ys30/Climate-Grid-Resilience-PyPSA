@@ -12,6 +12,7 @@ on:
       - 'src/grid_resilience/eia_api.py'
       - 'src/grid_resilience/model_comparison.py'
       - 'tests/test_model_comparison.py'
+      - 'tests/test_pypsa_real_capacity_integration.py'
 jobs:
   partial-nameplate:
     runs-on: ubuntu-24.04

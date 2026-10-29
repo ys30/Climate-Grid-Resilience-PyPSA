@@ -9,6 +9,9 @@ on:
       - 'tests/test_eia_exchange_api.py'
       - 'src/grid_resilience/azps_observed_balance.py'
       - 'tests/test_azps_observed_balance.py'
+      - 'src/grid_resilience/srp_azps_audit.py'
+      - 'tests/test_srp_azps_audit.py'
+      - 'src/grid_resilience/eia_api.py'
 jobs:
   exchange-audit:
     runs-on: ubuntu-24.04
@@ -34,6 +37,12 @@ jobs:
             --exchange-csv data/processed/azps_exchange.csv \
             --demand-csv data/processed/eia930_api_demand.csv \
             --output outputs/azps_observed_balance
+      - name: Download SRP and AZPS demand for observed-neighbor validation
+        run: |
+          python -m grid_resilience.eia_api --start 2024-07-01 --end 2024-07-08 --bas AZPS SRP --output data/processed/srp_azps_demand.csv
+      - name: Validate SRP demand and AZPS bilateral exchange alignment
+        run: |
+          python -m grid_resilience.srp_azps_audit --demand-csv data/processed/srp_azps_demand.csv --exchange-csv data/processed/azps_exchange.csv --output outputs/srp_azps
       - name: Upload observed exchanges and provenance
         if: always()
         uses: actions/upload-artifact@v4
@@ -47,3 +56,5 @@ jobs:
             data/processed/azps_exchange_provenance.json
             data/processed/eia930_api_demand_provenance.json
             outputs/azps_observed_balance/
+            data/processed/srp_azps_demand_provenance.json
+            outputs/srp_azps/

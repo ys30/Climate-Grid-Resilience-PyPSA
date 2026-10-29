@@ -11,6 +11,10 @@ def load_eia860_capacities(path, required_bas=("CISO", "AZPS", "BPAT")):
     df.capacity_mw = pd.to_numeric(df.capacity_mw, errors="raise")
     if df.capacity_mw.isna().any() or (df.capacity_mw < 0).any():
         raise ValueError("Nonnegative numeric capacities required")
+    allowed = {"thermal", "wind", "solar", "hydro", "nuclear", "geothermal", "storage", "other"}
+    unknown = set(df.technology) - allowed
+    if unknown:
+        raise ValueError(f"Unknown technology categories: {sorted(unknown)}")
     absent = set(required_bas) - set(df.ba)
     if absent:
         raise ValueError(f"EIA-860 capacity lacks required BA: {sorted(absent)}")

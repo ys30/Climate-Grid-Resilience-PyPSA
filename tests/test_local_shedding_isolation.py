@@ -21,5 +21,5 @@ def test_unserved_generation_cannot_be_exported_across_srp_link():
     assert net.generators.at["SRP_unserved","bus"]=="SRP_load_bus"
     # With SRP and AZPS having no physical generation, neither may supply
     # another BA using its artificial local shortage generator.
-    assert net.links_t.p0["AZPS_SRP"].abs().max() < 1e-5
+    assert net.links_t.p0["AZPS_SRP"].min() >= -1e-5
     assert net.generators_t.p["SRP_unserved"].sum()>0

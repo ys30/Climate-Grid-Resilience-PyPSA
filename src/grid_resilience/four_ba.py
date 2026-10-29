@@ -28,7 +28,7 @@ def solve(demand_csv, capacity_csv, start, end, output, cache,
     for scenario in SCENARIOS:
         n=build_model(demand,weather,scenario,capacities=capacities,
                       intertie_fraction=intertie_fraction,
-                      bas=FOUR_BAS,interties=FOUR_LINKS)
+                      bas=FOUR_BAS,interties=FOUR_LINKS,local_shedding=True)
         status,termination=n.optimize(solver_name="highs")
         if (status,termination)!=("ok","optimal"):
             raise RuntimeError(f"Four-BA solver failed: {scenario}, {status}, {termination}")

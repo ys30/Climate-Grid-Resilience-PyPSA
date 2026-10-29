@@ -35,6 +35,7 @@ def parse_rto(records, start, end, bas=BAS):
     out = out.reindex(index=idx, columns=list(bas))
     if out.isna().any().any():
         raise ValueError(f"Missing BA/hour observations: {out.isna().sum().to_dict()}")
+    out.columns.name = None  # stable CSV round-trip schema
     return out.astype(float)
 
 

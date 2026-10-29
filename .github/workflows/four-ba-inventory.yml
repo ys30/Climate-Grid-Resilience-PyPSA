@@ -1,0 +1,57 @@
+name: Four-BA EIA-860 and demand expansion audit
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/four-ba-inventory.yml'
+      - 'src/grid_resilience/eia860.py'
+      - 'src/grid_resilience/run_eia860.py'
+      - 'src/grid_resilience/eia_api.py'
+jobs:
+  four-ba-validation:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    env:
+      EIA_API_KEY: ${{ secrets.EIA_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -e '.[dev,model]'
+      - name: Run regression suite
+        run: python -m pytest -q
+      - name: Validate four-BA official annual operating fleet
+        run: |
+          python -m grid_resilience.run_eia860 --bas CISO AZPS BPAT SRP --output data/processed/eia860_four_ba
+      - name: Fetch matching four-BA hourly observed demand
+        run: |
+          python -m grid_resilience.eia_api --bas CISO AZPS BPAT SRP --start 2024-07-01 --end 2024-07-08 --output data/processed/four_ba_demand.csv
+      - name: Verify BA and hourly coverage
+        run: |
+          python - <<'PY'
+          import pandas as pd
+          c = pd.read_csv("data/processed/eia860_four_ba/eia860_ba_technology_capacity.csv")
+          d = pd.read_csv("data/processed/four_ba_demand.csv")
+          bas = {"CISO", "AZPS", "BPAT", "SRP"}
+          assert set(c.ba) == bas, set(c.ba)
+          assert set(d.columns) == {"timestamp", *bas}, d.columns.tolist()
+          assert len(d) == 168, len(d)
+          assert not d.isna().any().any()
+          print(c.groupby("ba").capacity_mw.sum().to_string())
+          PY
+      - name: Upload four-BA input provenance and inventory
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: four-ba-eia860-input-coverage
+          if-no-files-found: warn
+          retention-days: 30
+          path: |
+            data/external/eia860_2024/download_manifest.json
+            data/processed/eia860_four_ba/
+            data/processed/four_ba_demand.csv
+            data/processed/four_ba_demand_provenance.json

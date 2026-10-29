@@ -1,0 +1,30 @@
+name: EIA-860 2024 official inventory validation
+on:
+  workflow_dispatch:
+jobs:
+  validate-inventory:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install pipeline
+        run: python -m pip install -e '.[dev,model]'
+      - name: Unit tests
+        run: python -m pytest -q
+      - name: Download and validate official EIA-860 2024
+        run: python -m grid_resilience.run_eia860
+      - name: Upload inventory and provenance
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eia860-2024-capacity-audit
+          if-no-files-found: warn
+          retention-days: 30
+          path: |
+            data/external/eia860_2024/download_manifest.json
+            data/processed/eia860/

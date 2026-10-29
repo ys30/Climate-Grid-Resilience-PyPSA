@@ -33,7 +33,7 @@ def _find(df, *names):
     raise ValueError(f"Required EIA-860 column absent: {names}. Available: {list(df.columns)}")
 
 
-def read_860(operable_xlsx, plant_xlsx, year=2024):
+def read_860(operable_xlsx, plant_xlsx, year=2024, return_unassigned=False):
     """Read extracted official EIA-860 generator and plant workbooks.
 
     EIA Excel files sometimes contain one metadata row before actual headings.
@@ -81,9 +81,10 @@ def read_860(operable_xlsx, plant_xlsx, year=2024):
     if plants.plant_id.duplicated().any():
         raise ValueError("Duplicated plant ID in plant spreadsheet")
     rows = rows.merge(plants, on="plant_id", how="left", validate="many_to_one")
-    if rows.ba.isna().any():
-        raise ValueError("Missing plant BA assignment for operating generator")
-    rows = rows[rows.ba.astype(str).str.strip().isin(BA_CODES)].copy()
+    unassigned = rows.loc[rows.ba.isna()].copy()
+    # BA assignment can be missing in a nationwide plant workbook. Never
+    # assign such rows to a western BA by guesswork or count their capacity.
+    rows = rows.loc[rows.ba.astype("string").str.strip().isin(BA_CODES).fillna(False)].copy()
     rows["capacity_mw"] = pd.to_numeric(rows.capacity_mw, errors="raise")
     if rows.capacity_mw.isna().any() or (rows.capacity_mw <= 0).any():
         raise ValueError("Operating generator capacity must be positive")
@@ -95,18 +96,20 @@ def read_860(operable_xlsx, plant_xlsx, year=2024):
         raise ValueError(f"Unmapped EIA energy-source codes; extend mapping explicitly: {unknown}")
     rows["technology"] = rows.fuel.map(FUEL_TECH)
     rows["data_year"] = int(year)
-    return rows.sort_values(["ba", "plant_id", "generator_id"]).reset_index(drop=True)
+    rows = rows.sort_values(["ba", "plant_id", "generator_id"]).reset_index(drop=True)
+    return (rows, unassigned) if return_unassigned else rows
 
 
 def export_860(operable_xlsx, plant_xlsx, output, year=2024):
     output = Path(output)
     output.mkdir(parents=True, exist_ok=True)
-    units = read_860(operable_xlsx, plant_xlsx, year)
+    units, unassigned = read_860(operable_xlsx, plant_xlsx, year, return_unassigned=True)
     capacities = units.groupby(["ba", "technology"], as_index=False).capacity_mw.sum()
     missing = set(BA_CODES) - set(capacities.ba)
     if missing:
         raise ValueError(f"No operating generation in requested BAs: {sorted(missing)}")
     units.to_csv(output / "eia860_operating_units.csv", index=False)
+    unassigned.to_csv(output / "eia860_unassigned_ba_audit.csv", index=False)
     capacities.to_csv(output / "eia860_ba_technology_capacity.csv", index=False)
     metadata = {
         "source": "https://www.eia.gov/electricity/data/eia860/",
@@ -114,6 +117,9 @@ def export_860(operable_xlsx, plant_xlsx, output, year=2024):
         "operable_generator_xlsx_sha256": hashlib.sha256(Path(operable_xlsx).read_bytes()).hexdigest(),
         "plant_xlsx_sha256": hashlib.sha256(Path(plant_xlsx).read_bytes()).hexdigest(),
         "status_filter": "OP only; standby and out-of-service excluded",
+        "unassigned_operating_generator_count": int(len(unassigned)),
+        "ba_assignment_complete_nationwide": bool(unassigned.empty),
+        "coverage_warning": "Unassigned units excluded; coverage of target BAs cannot be guaranteed without resolving them" if len(unassigned) else None,
         "capacity_metric": "EIA-860 nameplate MW, NOT hourly available power",
         "scope": list(BA_CODES),
         "technology_mapping": FUEL_TECH,

@@ -7,6 +7,7 @@ on:
       - '.github/workflows/three-vs-four-ba.yml'
       - 'src/grid_resilience/three_vs_four_ba.py'
       - 'tests/test_three_vs_four_ba.py'
+      - 'tests/test_local_shedding_isolation.py'
       - 'src/grid_resilience/select_capacity_bas.py'
       - 'tests/test_select_capacity_bas.py'
       - 'src/grid_resilience/western_us.py'

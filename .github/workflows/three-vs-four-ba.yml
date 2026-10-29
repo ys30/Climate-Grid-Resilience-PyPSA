@@ -48,7 +48,7 @@ jobs:
           key: era5-western-us-2024-07-v1
       - name: Matched three-BA EIA-860 generator-only solve
         run: |
-          python -m grid_resilience.western_us --eia-csv data/processed/four_ba_demand.csv --eia860-capacities data/processed/three_ba_matched_nameplate.csv --start 2024-07-01 --end 2024-07-08 --output outputs/matched_three_ba --cache data/cache
+          python -m grid_resilience.western_us --eia-csv data/processed/four_ba_demand.csv --eia860-capacities data/processed/three_ba_matched_nameplate.csv --local-shedding --start 2024-07-01 --end 2024-07-08 --output outputs/matched_three_ba --cache data/cache
       - name: Matched four-BA EIA-860 generator-only solve
         run: |
           python -m grid_resilience.four_ba --demand-csv data/processed/four_ba_demand.csv --capacities data/processed/four_ba_projection/modeled_nameplate_only.csv --start 2024-07-01 --end 2024-07-08 --output outputs/matched_four_ba --cache data/cache

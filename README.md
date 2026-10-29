@@ -99,3 +99,18 @@ The filename is illustrative; use the actual official download. The parser delib
 The previous two schematic links (CISO–AZPS, CISO–BPAT) are still hypothetical. A topology validation step must confirm direct BA connectivity using EIA interconnection reference lists and/or authoritative WECC network geometry, then obtain rated intertie transfer capability from an independently sourced planning/operating dataset.
 
 **Research-quality gate:** Do not describe a real-grid physical-resilience assessment until actual 2024 EIA-860/EIA-930/ERA5 inputs have run end-to-end, generator and transmission capacities are validated, and grid simulation outcomes are compared with held-out operational observations.
+
+
+## EIA API v2 automated hourly demand (new)
+
+The secret-safe collector in `src/grid_resilience/eia_api.py` retrieves EIA's published hourly `electricity/rto/region-data` **actual demand (type D)** for CISO, AZPS and BPAT, automatically pages beyond the 5,000-row API limit, enforces exact hourly completeness and produces a CSV consumable by the main PyPSA model.
+
+    export EIA_API_KEY='your-key'  # local environment only; do NOT commit!
+    python -m grid_resilience.eia_api --start 2024-07-01 --end 2024-07-08 --output data/processed/eia930_api_demand.csv
+    python -m grid_resilience.western_us --eia-csv data/processed/eia930_api_demand.csv --start 2024-07-01 --end 2024-07-08 --output outputs/western_us
+
+**Timestamp distinction:** EIA API `period` values indicate UTC hour beginning; raw legacy six-month BALANCE CSV files have been treated as UTC hour ending in the existing alternate importer. The API output is never shifted by one hour. Do not silently mix these conventions. Validate the source-specific semantics before combining datasets.
+
+[Run the manual GitHub Actions EIA data workflow](https://github.com/ys30/Climate-Grid-Resilience-PyPSA/actions/workflows/eia-data.yml) after configuring repository secret `EIA_API_KEY`. This workflow produces validated observed-demand and provenance artifacts, but **does not yet perform an end-to-end PyPSA empirical solve**. No API key is committed to the repository. The API input must be used with explicitly sourced EIA-860 capacities and actual network limits before making real-grid reliability claims.
+
+EIA API documentation: https://www.eia.gov/opendata/documentation.php

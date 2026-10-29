@@ -86,3 +86,16 @@ The EIA-860 converter selects operational-status **OP** records only, joins gene
 **Important:** The solver's installed MW now come from EIA-860 when supplied, but its availability curves, weather derating assumptions, marginal costs, three-node link topology and intertie transfer limits remain illustrative. Hydro, nuclear and geothermal currently enter at constant maximum output; this should be replaced by appropriate operational time series. Storage and fuel technology types not explicitly handled must be modeled separately. EIA-860 is not an hourly forced-outage or plant availability dataset. **No completed empirical optimization or verified CI results are claimed in this commit.**
 
 A subsequent validation should reconcile EIA-860 BA installed MW with EIA-930 reported hourly generation and EIA-930 interchange, and replace the two hypothetical connections with licensed WECC line or interchange constraints.
+
+
+## Phase 3: Historical inter-BA interchange auditing
+
+The module `src/grid_resilience/interchange.py` processes official [EIA-930 INTERCHANGE](https://www.eia.gov/electricity/930-content/about.html) six-month records for the three pilot balancing authorities, validates duplicate BA/neighbor/hour combinations, compares opposite-direction reports, and writes observed pair summaries and provenance.
+
+    python -m grid_resilience.interchange --interchange-csv data/external/EIA930_INTERCHANGE_2024_Jul_Dec.csv --start 2024-07-01 --end 2024-07-08 --output outputs/interchange_audit
+
+The filename is illustrative; use the actual official download. The parser deliberately rejects unknown EIA field naming rather than making unverified assumptions. The output summary includes maximum and 95th-percentile **observed** absolute interchange, and reciprocal-report discrepancies. **These are NOT rated transmission capacities.** They cannot be plugged directly into PyPSA link `p_nom` as physical constraints. In addition, BA-to-BA reported interchange may include non-physical scheduled transactions and need not correspond one-to-one with transmission corridors.
+
+The previous two schematic links (CISO–AZPS, CISO–BPAT) are still hypothetical. A topology validation step must confirm direct BA connectivity using EIA interconnection reference lists and/or authoritative WECC network geometry, then obtain rated intertie transfer capability from an independently sourced planning/operating dataset.
+
+**Research-quality gate:** Do not describe a real-grid physical-resilience assessment until actual 2024 EIA-860/EIA-930/ERA5 inputs have run end-to-end, generator and transmission capacities are validated, and grid simulation outcomes are compared with held-out operational observations.

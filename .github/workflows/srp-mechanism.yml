@@ -7,6 +7,8 @@ on:
       - '.github/workflows/srp-mechanism.yml'
       - 'src/grid_resilience/srp_mechanism_decomposition.py'
       - 'tests/test_srp_mechanism_decomposition.py'
+      - 'src/grid_resilience/western_us.py'
+      - 'tests/test_local_shedding_isolation.py'
 jobs:
   factorial:
     runs-on: ubuntu-24.04

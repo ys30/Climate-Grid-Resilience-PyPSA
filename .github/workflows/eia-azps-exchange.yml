@@ -7,6 +7,8 @@ on:
       - '.github/workflows/eia-azps-exchange.yml'
       - 'src/grid_resilience/eia_exchange_api.py'
       - 'tests/test_eia_exchange_api.py'
+      - 'src/grid_resilience/azps_observed_balance.py'
+      - 'tests/test_azps_observed_balance.py'
 jobs:
   exchange-audit:
     runs-on: ubuntu-24.04
@@ -24,6 +26,14 @@ jobs:
       - run: python -m pytest -q tests/test_eia_exchange_api.py
       - name: Fetch observed AZPS EIA-930 bilateral exchange
         run: python -m grid_resilience.eia_exchange_api --start 2024-07-01 --end 2024-07-08 --output data/processed/azps_exchange.csv
+      - name: Download matching observed BA demand
+        run: python -m grid_resilience.eia_api --start 2024-07-01 --end 2024-07-08 --output data/processed/eia930_api_demand.csv
+      - name: Audit AZPS observed demand and cross-BA balance
+        run: |
+          python -m grid_resilience.azps_observed_balance \
+            --exchange-csv data/processed/azps_exchange.csv \
+            --demand-csv data/processed/eia930_api_demand.csv \
+            --output outputs/azps_observed_balance
       - name: Upload observed exchanges and provenance
         if: always()
         uses: actions/upload-artifact@v4
@@ -35,3 +45,5 @@ jobs:
             data/processed/azps_exchange.csv
             data/processed/azps_observed_pairwise_exchange_summary.csv
             data/processed/azps_exchange_provenance.json
+            data/processed/eia930_api_demand_provenance.json
+            outputs/azps_observed_balance/

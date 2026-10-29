@@ -129,7 +129,7 @@ def fetch_era5(start, end, cache_dir, bas=BAS):
     return frames
 
 
-def build_model(demand, weather, scenario, reserve_margin=0.18, intertie_fraction=0.10, capacities=None, bas=BAS, interties=INTERTIES):
+def build_model(demand, weather, scenario, reserve_margin=0.18, intertie_fraction=0.10, capacities=None, bas=BAS, interties=INTERTIES, local_shedding=False):
     """PyPSA linear dispatch with load shedding and illustrative links.
 
     Thermal capacities are explicitly *inferred* from each BA's observed peak,
@@ -159,7 +159,13 @@ def build_model(demand, weather, scenario, reserve_margin=0.18, intertie_fractio
         peak = float(demand[ba].max())
         capacity = peak * (1 + reserve_margin)
         n.add("Bus", ba)
-        n.add("Load", f"{ba}_demand", bus=ba, p_set=load)
+        if local_shedding:
+            # Isolate unmet demand behind a one-way supply-to-load link.
+            # Virtual unserved generation cannot flow back into the BA grid.
+            n.add("Bus", f"{ba}_load_bus")
+            n.add("Link", f"{ba}_supply_to_load", bus0=ba, bus1=f"{ba}_load_bus",
+                  p_nom=peak * 20, p_min_pu=0, efficiency=1.0)
+        n.add("Load", f"{ba}_demand", bus=f"{ba}_load_bus" if local_shedding else ba, p_set=load)
         # illustrative capacity mix (70% thermal, 20% wind, 10% solar)
         thermal_avail = np.clip(1 - 0.012 * np.maximum(temp - 35, 0), 0.40, 1.0)
         wind_avail = np.clip((wind - 3) / 12, 0, 1) * (1 - wind_penalty)
@@ -179,7 +185,7 @@ def build_model(demand, weather, scenario, reserve_margin=0.18, intertie_fractio
                 if nameplate > 0:
                     n.add("Generator", f"{ba}_{tech}", bus=ba,
                           p_nom=nameplate, marginal_cost=marginal_cost)
-        n.add("Generator", f"{ba}_unserved", bus=ba, p_nom=peak * 10,
+        n.add("Generator", f"{ba}_unserved", bus=f"{ba}_load_bus" if local_shedding else ba, p_nom=peak * 10,
               marginal_cost=10000.0)
     # Illustrative capacity-limited exchange, not measured electrical line parameters.
     for a, b in interties:

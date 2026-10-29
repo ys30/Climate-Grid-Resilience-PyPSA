@@ -1,0 +1,64 @@
+name: Four-BA SRP climate-grid screening solve
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/four-ba-solve.yml'
+      - 'src/grid_resilience/four_ba.py'
+      - 'src/grid_resilience/western_us.py'
+      - 'src/grid_resilience/capacity_projection.py'
+      - 'tests/test_four_ba.py'
+jobs:
+  four-ba-solve:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    env:
+      EIA_API_KEY: ${{ secrets.EIA_API_KEY }}
+      OPENBLAS_NUM_THREADS: '1'
+      OMP_NUM_THREADS: '1'
+      MPLBACKEND: Agg
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -e '.[dev,model]'
+      - name: Run unit tests
+        run: python -m pytest -q
+      - name: Fetch four-BA annual EIA-860 inventory
+        run: python -m grid_resilience.run_eia860 --bas CISO AZPS BPAT SRP --output data/processed/eia860_four_ba
+      - name: Produce four-BA generator-only capacity projection
+        run: |
+          python -m grid_resilience.capacity_projection \
+            --bas CISO AZPS BPAT SRP \
+            --source data/processed/eia860_four_ba/eia860_ba_technology_capacity.csv \
+            --output data/processed/four_ba_projection
+      - name: Fetch four-BA actual hourly demand
+        run: |
+          python -m grid_resilience.eia_api \
+            --bas CISO AZPS BPAT SRP \
+            --start 2024-07-01 --end 2024-07-08 \
+            --output data/processed/four_ba_demand.csv
+      - name: Solve four-BA PyPSA weather screening
+        run: |
+          python -m grid_resilience.four_ba \
+            --demand-csv data/processed/four_ba_demand.csv \
+            --capacities data/processed/four_ba_projection/modeled_nameplate_only.csv \
+            --start 2024-07-01 --end 2024-07-08 \
+            --output outputs/four_ba --cache data/cache
+      - name: Save data and model results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: four-ba-srp-pypsa-screening
+          if-no-files-found: warn
+          retention-days: 30
+          path: |
+            data/external/eia860_2024/download_manifest.json
+            data/processed/eia860_four_ba/
+            data/processed/four_ba_projection/
+            data/processed/four_ba_demand_provenance.json
+            outputs/four_ba/

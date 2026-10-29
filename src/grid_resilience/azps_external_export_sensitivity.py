@@ -35,14 +35,17 @@ def experiment(demand,weather,caps,obligation):
             if enabled:
                 # Fixed observed export to nonmodeled partners. Attached on AZPS
                 # physical supply bus, not its private unmet-demand bus.
-                n.add("Load","AZPS_external_observed_net_export_diagnostic",
-                      bus="AZPS",p_set=obligation.to_numpy(dtype=float))
+                n.add("Bus","AZPS_external_obligation_bus")
+                n.add("Link","AZPS_external_supply",bus0="AZPS",bus1="AZPS_external_obligation_bus",p_nom=max(float(obligation.max())*2,1.),p_min_pu=0,efficiency=1.0)
+                n.add("Load","AZPS_external_observed_net_export_diagnostic",bus="AZPS_external_obligation_bus",p_set=obligation.to_numpy(dtype=float))
+                n.add("Generator","AZPS_external_unserved",bus="AZPS_external_obligation_bus",p_nom=max(float(obligation.max())*2,1.),marginal_cost=10000.0)
             status,termination=n.optimize(solver_name="highs")
             if (status,termination)!=("ok","optimal"):
                 raise RuntimeError(f"Solver failed: {scenario}, boundary={enabled}")
             for ba in FOUR_BAS:
                 shortage=n.generators_t.p[f"{ba}_unserved"].clip(lower=0)
                 rows.append({"scenario":scenario,"boundary_obligation_enabled":enabled,
+                             "external_obligation_unserved_mwh":float(n.generators_t.p["AZPS_external_unserved"].sum()) if enabled and ba=="AZPS" else 0.,
                              "ba":ba,"modeled_unserved_mwh":float(shortage.sum()),
                              "shortage_hours":int((shortage>1e-4).sum()),
                              "observed_outside_net_export_obligation_mwh":float(obligation.sum()) if enabled else 0.})
@@ -73,7 +76,7 @@ def main():
         "total_external_export_mwh":float(obligation.sum()),
         "important":"This is a screening sensitivity, not a physically validated BA dispatch counterfactual; historical BA demand and exchanges may share accounting conventions, and applying observed exports as extra load can double-count obligations depending on demand definitions.",
         "no_claim":"NOT measured avoided outages, calibrated firm exports or historical network thermal limits",
-        "constraint":"One-way local shedding prevents export of virtual unmet-demand generation. The fixed export load may cause generator infeasibility if physical supply inadequate; unserved energy excludes unmet external export."
+        "constraint":"One-way local shedding prevents export of virtual unmet-demand generation. Unmet external obligations are modeled with separate isolated shortage and excluded from native AZPS shortage."
     },indent=2)+"\n")
     print(results.to_string(index=False))
 

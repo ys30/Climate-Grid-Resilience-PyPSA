@@ -144,10 +144,15 @@ Both steps are now included in the manually triggered Western US solve GitHub wo
 
 ## Phase 6 — official 2024 EIA-860 generator inventory download
 
-[Run the standalone inventory workflow](https://github.com/ys30/Climate-Grid-Resilience-PyPSA/actions/workflows/eia860-inventory.yml). This downloads the official 2024 EIA-860 archive directly from https://www.eia.gov/electricity/data/eia860/xls/eia8602024.zip, extracts the annual operating-generator and plant workbooks, validates source SHA-256, and processes CISO/AZPS/BPAT generator data using the existing strict EIA-860 schema adapter.
+[Run the standalone inventory workflow](https://github.com/ys30/Climate-Grid-Resilience-PyPSA/actions/workflows/eia860-inventory.yml). This downloads the official 2024 EIA-860 archive directly from https://www.eia.gov/electricity/data/eia860/archive/xls/eia8602024.zip, extracts the annual operating-generator and plant workbooks, validates source SHA-256, and processes CISO/AZPS/BPAT generator data using the existing strict EIA-860 schema adapter.
 
     python -m grid_resilience.run_eia860
 
 The workflow uploads the structured capacity inventory, detailed plant-unit mapping, metadata, and capacity audit. If EIA changes workbook headers, status codes, or fuel codes, it intentionally **fails with a diagnostic error rather than silently making up an inventory**. The standalone inventory workflow is independent of the weather/dispatch workflow until real file layout and totals have been validated. The EIA archive is public and requires no API key; the EIA key is still needed for the hourly RTO API.
 
 **Interpretation:** EIA-860 2024 year-end installed nameplate is not the same as available July 2024 operating capacity; additions, retirements, storage energy capacity, dispatchable hydro, forced outages and plant-to-BA reporting all require review. 2024 EIA-860M monthly data can help correct within-year plant commissioning/retirement timing. Do not immediately compare 2024 annual nameplate to one week of EIA-930 load as though it were firm operational capacity.
+
+
+### EIA-860 run #1 download repair (2026-10-29)
+
+The first inventory Actions run failed at ZIP magic-byte validation, before Excel parsing. The original download URL omitted the `archive/` segment. The 2024 ZIP link on the EIA official index currently points to `https://www.eia.gov/electricity/data/eia860/archive/xls/eia8602024.zip`. The downloader now follows that exact official address and tolerates year-prefixed official workbook filenames. This URL change is committed but the end-to-end official inventory ETL must be rerun before claiming actual capacity totals.

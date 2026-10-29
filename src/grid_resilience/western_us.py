@@ -197,7 +197,7 @@ def build_model(demand, weather, scenario, reserve_margin=0.18, intertie_fractio
 
 
 def run(eia_csv, start, end, output="outputs/western_us", cache="data/cache",
-        reserve_margin=0.18, intertie_fraction=0.10, eia860_capacities=None):
+        reserve_margin=0.18, intertie_fraction=0.10, eia860_capacities=None, local_shedding=False):
     output = Path(output)
     output.mkdir(parents=True, exist_ok=True)
     demand = load_eia930(eia_csv, start, end)
@@ -215,7 +215,7 @@ def run(eia_csv, start, end, output="outputs/western_us", cache="data/cache",
     rows = []
     profiles = []
     for name in SCENARIOS:
-        n = build_model(demand, weather, name, reserve_margin, intertie_fraction, capacities)
+        n = build_model(demand, weather, name, reserve_margin, intertie_fraction, capacities, local_shedding=local_shedding)
         status, termination = n.optimize(solver_name="highs")
         if status != "ok" or termination != "optimal":
             raise RuntimeError(f"Optimization failed for {name}: {status} / {termination}")
@@ -246,6 +246,7 @@ def run(eia_csv, start, end, output="outputs/western_us", cache="data/cache",
         "capacity_source": "EIA-860 nameplate" if capacities is not None else "synthetic peak + reserve margin",
         "eia860_capacity_csv": str(eia860_capacities) if eia860_capacities else None,
         "analysis_type": "linear capacity-constrained electricity adequacy experiment",
+        "local_shedding_isolated": local_shedding,
         "not": ["actual WECC AC/DC power flow", "outage probability estimate",
                 "validated generator/network capacity", "ERA5 climate-change projection"]
     }
@@ -264,11 +265,12 @@ def main():
     p.add_argument("--eia860-capacities", default=None, help="Processed EIA-860 BA/technology capacity CSV")
     p.add_argument("--reserve-margin", type=float, default=0.18)
     p.add_argument("--intertie-fraction", type=float, default=0.10)
+    p.add_argument("--local-shedding", action="store_true", help="One-way load-bus structure prevents exports of unmet demand")
     a = p.parse_args()
     if not 0 <= a.reserve_margin <= 2 or not 0 <= a.intertie_fraction <= 1:
         p.error("reserve-margin must be 0..2; intertie-fraction must be 0..1")
     print(run(a.eia_csv, a.start, a.end, a.output, a.cache,
-              a.reserve_margin, a.intertie_fraction, a.eia860_capacities).to_string(index=False))
+              a.reserve_margin, a.intertie_fraction, a.eia860_capacities, a.local_shedding).to_string(index=False))
 
 
 if __name__ == "__main__":

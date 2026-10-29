@@ -12,3 +12,13 @@ def test_eia860_download_manifest_from_cached_zip(tmp_path):
     assert Path(result["extraction"]["plants"]).read_bytes() == b"plant fixture"
     assert len(result["archive_sha256"]) == 64
     assert (tmp_path / "download_manifest.json").exists()
+
+
+def test_eia860_year_prefixed_workbooks(tmp_path):
+    archive = tmp_path / "eia8602024.zip"
+    with ZipFile(archive, "w") as z:
+        z.writestr("3_1_Generator_Y2024.xlsx", b"generators")
+        z.writestr("2___Plant_Y2024.xlsx", b"plants")
+    files = obtain(tmp_path)["extraction"]
+    assert Path(files["generators"]).read_bytes() == b"generators"
+    assert Path(files["plants"]).read_bytes() == b"plants"

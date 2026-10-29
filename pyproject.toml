@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 name = "grid-resilience"
 version = "0.1.0"
 requires-python = ">=3.10"
-dependencies = ["numpy>=1.24","pandas>=2.0","matplotlib>=3.7"]
+dependencies = ["numpy>=1.24","pandas>=2.0","matplotlib>=3.7","openpyxl>=3.1"]
 [project.optional-dependencies]
 model = ["pypsa>=0.35,<2","highspy"]
 dev = ["pytest>=8","jupyterlab","ipykernel"]

@@ -14,6 +14,8 @@ on:
       - 'tests/test_model_comparison.py'
       - 'tests/test_pypsa_real_capacity_integration.py'
       - 'src/grid_resilience/workflow_summary.py'
+      - 'src/grid_resilience/azps_transfer_sensitivity.py'
+      - 'tests/test_azps_transfer_sensitivity.py'
 jobs:
   partial-nameplate:
     runs-on: ubuntu-24.04
@@ -84,6 +86,13 @@ jobs:
             --synthetic outputs/matched_synthetic_reference/metrics.csv \
             --partial-nameplate outputs/eia860_partial_nameplate/metrics.csv \
             --output outputs/model_comparison
+      - name: Quantify AZPS sensitivity to hypothetical BA transfer limits
+        run: |
+          python -m grid_resilience.azps_transfer_sensitivity \
+            --eia-csv data/processed/eia930_api_demand.csv \
+            --capacities data/processed/eia860_projection/modeled_nameplate_only.csv \
+            --cache data/cache \
+            --output outputs/azps_transfer_sensitivity.csv
       - name: Build scenario report
         run: python -m grid_resilience.report --output outputs/eia860_partial_nameplate
       - name: Publish run diagnostics and missing-output summary
@@ -105,4 +114,5 @@ jobs:
             outputs/eia860_partial_nameplate/
             outputs/matched_synthetic_reference/
             outputs/model_comparison/
+            outputs/azps_transfer_sensitivity.csv
             outputs/workflow_run_summary.md

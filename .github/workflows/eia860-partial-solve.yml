@@ -13,6 +13,7 @@ on:
       - 'src/grid_resilience/model_comparison.py'
       - 'tests/test_model_comparison.py'
       - 'tests/test_pypsa_real_capacity_integration.py'
+      - 'src/grid_resilience/workflow_summary.py'
 jobs:
   partial-nameplate:
     runs-on: ubuntu-24.04
@@ -85,6 +86,9 @@ jobs:
             --output outputs/model_comparison
       - name: Build scenario report
         run: python -m grid_resilience.report --output outputs/eia860_partial_nameplate
+      - name: Publish run diagnostics and missing-output summary
+        if: always()
+        run: python -m grid_resilience.workflow_summary --output outputs/workflow_run_summary.md
       - name: Upload reproducible diagnostics and scenarios even if later steps fail
         if: always()
         uses: actions/upload-artifact@v4
@@ -101,3 +105,4 @@ jobs:
             outputs/eia860_partial_nameplate/
             outputs/matched_synthetic_reference/
             outputs/model_comparison/
+            outputs/workflow_run_summary.md

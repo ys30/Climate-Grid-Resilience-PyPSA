@@ -50,6 +50,11 @@ jobs:
             --output outputs/western_us --cache data/cache
       - name: Generate regional resilience tables and plots
         run: python -m grid_resilience.report --output outputs/western_us
+      - name: Diagnose modeled baseline shortfalls
+        run: python -m grid_resilience.diagnostics --input outputs/western_us/hourly_unserved.csv --output outputs/western_us/diagnostics
+      - name: Test assumed capacity and transfer sensitivity
+        run: |
+          python -m grid_resilience.sensitivity --eia-csv data/processed/eia930_api_demand.csv --start "${{ inputs.start }}" --end "${{ inputs.end }}" --cache data/cache --output outputs/western_us/baseline_sensitivity.csv
       - name: Upload reproducible modeling inputs and outputs
         if: always()
         uses: actions/upload-artifact@v4

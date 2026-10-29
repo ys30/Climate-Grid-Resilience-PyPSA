@@ -87,3 +87,20 @@ def test_eia860_quarantines_unassigned_operating_units(tmp_path):
     assert len(units) == 1
     assert len(missing) == 1
     assert int(missing.plant_id.iloc[0]) == 2
+
+
+def test_eia860_storage_is_classified_but_not_counted_as_firm_generation(tmp_path):
+    generators = tmp_path / "3_1_Generator2024.xlsx"
+    plants = tmp_path / "2___Plant2024.xlsx"
+    pd.DataFrame({
+        "Plant Code": [1, 2], "Generator ID": ["A", "B"],
+        "Nameplate Capacity (MW)": [100, 50],
+        "Energy Source 1": ["NG", "MWH"], "Status": ["OP", "OP"],
+    }).to_excel(generators, sheet_name="Operable", index=False)
+    pd.DataFrame({
+        "Plant Code": [1, 2],
+        "Balancing Authority Code": ["CISO", "AZPS"],
+    }).to_excel(plants, index=False)
+    units = read_860(generators, plants)
+    assert set(units.technology) == {"thermal", "storage"}
+    assert units.loc[units.technology.eq("storage"), "capacity_mw"].iloc[0] == 50

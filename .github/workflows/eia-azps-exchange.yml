@@ -17,6 +17,8 @@ on:
       - 'tests/test_generation_reconciliation.py'
       - 'src/grid_resilience/azps_boundary_coverage.py'
       - 'tests/test_azps_boundary_coverage.py'
+      - 'src/grid_resilience/azps_boundary_hourly_diagnostic.py'
+      - 'tests/test_azps_boundary_hourly_diagnostic.py'
 jobs:
   exchange-audit:
     runs-on: ubuntu-24.04
@@ -44,6 +46,12 @@ jobs:
             --exchange-csv data/processed/azps_exchange.csv \
             --demand-csv data/processed/eia930_api_demand.csv \
             --output outputs/azps_observed_balance
+      - name: Quantify hourly outside-boundary AZPS imports and exports
+        run: |
+          python -m grid_resilience.azps_boundary_hourly_diagnostic \
+            --boundary-csv outputs/azps_boundary_coverage/azps_boundary_hourly.csv \
+            --balance-csv outputs/azps_observed_balance/azps_hourly_demand_import_balance.csv \
+            --output outputs/azps_outside_boundary
       - name: Download SRP and AZPS demand for observed-neighbor validation
         run: |
           python -m grid_resilience.eia_api --start 2024-07-01 --end 2024-07-08 --bas AZPS SRP --output data/processed/srp_azps_demand.csv
@@ -73,6 +81,7 @@ jobs:
             data/processed/eia930_api_demand_provenance.json
             outputs/azps_observed_balance/
             outputs/azps_boundary_coverage/
+            outputs/azps_outside_boundary/
             data/processed/srp_azps_demand_provenance.json
             outputs/srp_azps/
             data/processed/azps_srp_reported_ng.csv

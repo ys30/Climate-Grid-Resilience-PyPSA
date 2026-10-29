@@ -182,6 +182,11 @@ def run(eia_csv, start, end, output="outputs/western_us", cache="data/cache",
     if eia860_capacities:
         from .capacity_adapter import load_eia860_capacities
         capacities = load_eia860_capacities(eia860_capacities)
+    if capacities is not None:
+        unsupported = {(ba, tech): mw for (ba, tech), mw in capacities.items()
+                       if tech in {"storage", "other"} and mw > 0}
+        if unsupported:
+            raise ValueError("EIA-860 includes storage/other capacity that this dispatch model cannot represent; implement storage energy/SOC and review other fuel sources before solving: " + str(unsupported))
     rows = []
     profiles = []
     for name in SCENARIOS:

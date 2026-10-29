@@ -24,7 +24,7 @@
 Observed gross exchange: **1,104,076 MWh**; omitted counterparties account for **19.709875% of gross exchange**. Reported overall AZPS mean net import: **+2866 MW**; net import from omitted counterparties: **−950.928571 MW**, i.e. the omitted partners collectively account for net AZPS exports. These are BA accounting averages and do not define geographic power paths or rated transfer.
 
 ## Modeling consequences
-- The four-BA graph omits 7/9 reported counterparties, but omitted flows are **not seven missing import sources**. Six omitted partners have negative mean AZPS net import (net AZPS export); only WACM and IID have positive mean values.
+- The four-BA graph omits 7/9 reported counterparties, but omitted flows are **not seven missing import sources**. Five omitted partners have negative mean AZPS net import (net AZPS export); only WACM and IID have positive mean values.
 - A model missing observed **exports** may underrepresent demand on modeled generation and misattribute available generation to AZPS load. Merely adding import capacity cannot remedy this.
 - The mean reported +4536 MW from SRP cannot be compared directly to a 798 MW illustrative aggregated PyPSA link as if they were identical physical facilities or thermal limits.
 - Current scenario outcomes remain **screening sensitivity**, not calibrated adequacy/observed outage estimates.

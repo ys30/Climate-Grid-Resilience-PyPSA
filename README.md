@@ -125,3 +125,18 @@ Outputs include hourly_unserved.csv, metrics.csv, system_metrics.csv, modeled_un
 **Evidence warning:** This is a weather/observed-load-driven **screening experiment**, not WECC-calibrated adequacy modeling. The workflow does not yet download EIA-860 capacity spreadsheets; if no preprocessed EIA-860 capacity file is supplied to the CLI, it runs with explicitly invented capacity shares and intertie limits. +4 °C is an illustrative counterfactual. It does not estimate actual outages or probabilities. GitHub Actions succeeding means a valid executable analysis, not external validation of model assumptions.
 
 The EIA key remains in GitHub Actions secrets and is not printed. Weather and energy raw sources are downloaded as part of a workflow run, with outputs collected as workflow artifacts. Historical event benchmarking against observed interchange and realistic generator availability remains required.
+
+
+## Phase 5 — diagnose baseline shortfalls
+
+The successful October 29, 2026 screening run (GitHub Actions #40921634189) simulated 23,934.46 MWh of baseline unserved energy over July 1–7, 2024, under hypothetical capacity mix and interties. This is NOT observed outage evidence. The baseline shortfalls cluster into a few UTC late-day hours and may reflect lack of firm supply or dispatch flexibility rather than intrinsic climate-driven inadequacy.
+
+The new diagnostics command is:
+
+    python -m grid_resilience.diagnostics --input outputs/western_us/hourly_unserved.csv --output outputs/western_us/diagnostics
+
+The new sensitivity command independently solves 12 alternative baseline models with assumed reserve margin of 18%, 30%, 45% or 60% and hypothetical intertie fractions of 0%, 10% or 20%:
+
+    python -m grid_resilience.sensitivity --eia-csv data/processed/eia930_api_demand.csv --start 2024-07-01 --end 2024-07-08 --cache data/cache --output outputs/western_us/baseline_sensitivity.csv
+
+Both steps are now included in the manually triggered Western US solve GitHub workflow. Changing assumptions to eliminate modeled shortages is NOT validation or calibration. For research-grade results, compare with EIA-930 measured generation and actual interchanges, connect the EIA-860 inventory, then source or justify physically credible transmission capabilities.

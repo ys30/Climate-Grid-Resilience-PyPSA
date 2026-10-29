@@ -10,8 +10,9 @@ import json
 from pathlib import Path
 from urllib.request import urlopen
 from zipfile import ZipFile
+import re
 
-URL = "https://www.eia.gov/electricity/data/eia860/xls/eia8602024.zip"
+URL = "https://www.eia.gov/electricity/data/eia860/archive/xls/eia8602024.zip"
 
 def obtain(destination, source_url=URL):
     root = Path(destination)
@@ -28,7 +29,7 @@ def obtain(destination, source_url=URL):
         for typ, marker in (("generators", "3_1_Generator2024"),
                             ("plants", "2___Plant2024")):
             matching = [name for name in z.namelist()
-                        if marker.casefold() in Path(name).name.casefold()
+                        if re.sub(r"[^a-z0-9]", "", marker.casefold()) in re.sub(r"[^a-z0-9]", "", Path(name).stem.casefold())
                         and name.lower().endswith((".xlsx", ".xlsm", ".xls"))]
             if len(matching) != 1:
                 raise ValueError(f"Expected one {marker} workbook, found {matching}")

@@ -6,6 +6,8 @@ def load_eia860_capacities(path, required_bas=("CISO", "AZPS", "BPAT")):
     df = pd.read_csv(path)
     if not {"ba", "technology", "capacity_mw"}.issubset(df):
         raise ValueError("Required columns: ba, technology, capacity_mw")
+    if df[["ba", "technology", "capacity_mw"]].isna().any().any():
+        raise ValueError("Missing BA, technology or capacity in EIA-860 inventory")
     if df.duplicated(["ba", "technology"]).any():
         raise ValueError("Duplicate BA-technology capacities")
     df.capacity_mw = pd.to_numeric(df.capacity_mw, errors="raise")
@@ -15,6 +17,9 @@ def load_eia860_capacities(path, required_bas=("CISO", "AZPS", "BPAT")):
     unknown = set(df.technology) - allowed
     if unknown:
         raise ValueError(f"Unknown technology categories: {sorted(unknown)}")
+    unexpected_bas = set(df.ba) - set(required_bas)
+    if unexpected_bas:
+        raise ValueError(f"Unexpected BA entries: {sorted(unexpected_bas)}")
     absent = set(required_bas) - set(df.ba)
     if absent:
         raise ValueError(f"EIA-860 capacity lacks required BA: {sorted(absent)}")

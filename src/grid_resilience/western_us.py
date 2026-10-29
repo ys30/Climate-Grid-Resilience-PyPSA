@@ -98,7 +98,7 @@ def fetch_era5(start, end, cache_dir):
     return frames
 
 
-def build_model(demand, weather, scenario, reserve_margin=0.18, intertie_fraction=0.10):
+def build_model(demand, weather, scenario, reserve_margin=0.18, intertie_fraction=0.10, capacities=None):
     """PyPSA linear dispatch with load shedding and illustrative links.
 
     Thermal capacities are explicitly *inferred* from each BA's observed peak,
@@ -138,9 +138,16 @@ def build_model(demand, weather, scenario, reserve_margin=0.18, intertie_fractio
             ("wind", 0.2, 3.0, wind_avail),
             ("solar", 0.1, 1.0, solar_avail),
         ]:
+            p_nom = capacity * share if capacities is None else capacities.get((ba, tech), 0.0)
             n.add("Generator", f"{ba}_{tech}", bus=ba,
-                  p_nom=capacity * share, marginal_cost=cost,
+                  p_nom=p_nom, marginal_cost=cost,
                   p_max_pu=availability)
+        if capacities is not None:
+            for tech, marginal_cost in [("hydro", 20), ("nuclear", 15), ("geothermal", 25)]:
+                nameplate = capacities.get((ba, tech), 0.0)
+                if nameplate > 0:
+                    n.add("Generator", f"{ba}_{tech}", bus=ba,
+                          p_nom=nameplate, marginal_cost=marginal_cost)
         n.add("Generator", f"{ba}_unserved", bus=ba, p_nom=peak * 10,
               marginal_cost=10000.0)
     # Illustrative capacity-limited exchange, not measured electrical line parameters.
@@ -153,16 +160,20 @@ def build_model(demand, weather, scenario, reserve_margin=0.18, intertie_fractio
 
 
 def run(eia_csv, start, end, output="outputs/western_us", cache="data/cache",
-        reserve_margin=0.18, intertie_fraction=0.10):
+        reserve_margin=0.18, intertie_fraction=0.10, eia860_capacities=None):
     output = Path(output)
     output.mkdir(parents=True, exist_ok=True)
     demand = load_eia930(eia_csv, start, end)
     weather = fetch_era5(start, end, cache)
     source_sha = hashlib.sha256(Path(eia_csv).read_bytes()).hexdigest()
+    capacities = None
+    if eia860_capacities:
+        from .capacity_adapter import load_eia860_capacities
+        capacities = load_eia860_capacities(eia860_capacities)
     rows = []
     profiles = []
     for name in SCENARIOS:
-        n = build_model(demand, weather, name, reserve_margin, intertie_fraction)
+        n = build_model(demand, weather, name, reserve_margin, intertie_fraction, capacities)
         status, termination = n.optimize(solver_name="highs")
         if status != "ok" or termination != "optimal":
             raise RuntimeError(f"Optimization failed for {name}: {status} / {termination}")
@@ -190,6 +201,8 @@ def run(eia_csv, start, end, output="outputs/western_us", cache="data/cache",
         "reserve_margin_assumed": reserve_margin,
         "intertie_fraction_assumed": intertie_fraction,
         "climate_scenarios": SCENARIOS,
+        "capacity_source": "EIA-860 nameplate" if capacities is not None else "synthetic peak + reserve margin",
+        "eia860_capacity_csv": str(eia860_capacities) if eia860_capacities else None,
         "analysis_type": "linear capacity-constrained electricity adequacy experiment",
         "not": ["actual WECC AC/DC power flow", "outage probability estimate",
                 "validated generator/network capacity", "ERA5 climate-change projection"]
@@ -206,13 +219,14 @@ def main():
     p.add_argument("--end", default="2024-07-08", help="UTC, exclusive")
     p.add_argument("--output", default="outputs/western_us")
     p.add_argument("--cache", default="data/cache")
+    p.add_argument("--eia860-capacities", default=None, help="Processed EIA-860 BA/technology capacity CSV")
     p.add_argument("--reserve-margin", type=float, default=0.18)
     p.add_argument("--intertie-fraction", type=float, default=0.10)
     a = p.parse_args()
     if not 0 <= a.reserve_margin <= 2 or not 0 <= a.intertie_fraction <= 1:
         p.error("reserve-margin must be 0..2; intertie-fraction must be 0..1")
     print(run(a.eia_csv, a.start, a.end, a.output, a.cache,
-              a.reserve_margin, a.intertie_fraction).to_string(index=False))
+              a.reserve_margin, a.intertie_fraction, a.eia860_capacities).to_string(index=False))
 
 
 if __name__ == "__main__":

@@ -70,3 +70,20 @@ def test_eia860_rejects_operating_generator_without_plant_id(tmp_path):
     }).to_excel(plants, index=False)
     with pytest.raises(ValueError, match="Operating generators missing valid Plant Code"):
         read_860(generators, plants)
+
+
+def test_eia860_quarantines_unassigned_operating_units(tmp_path):
+    generators = tmp_path / "3_1_Generator2024.xlsx"
+    plants = tmp_path / "2___Plant2024.xlsx"
+    pd.DataFrame({
+        "Plant Code": [1, 2], "Generator ID": ["A", "B"],
+        "Nameplate Capacity (MW)": [100, 50],
+        "Energy Source 1": ["NG", "NG"], "Status": ["OP", "OP"],
+    }).to_excel(generators, sheet_name="Operable", index=False)
+    pd.DataFrame({
+        "Plant Code": [1, 2], "Balancing Authority Code": ["CISO", None],
+    }).to_excel(plants, index=False)
+    units, missing = read_860(generators, plants, return_unassigned=True)
+    assert len(units) == 1
+    assert len(missing) == 1
+    assert int(missing.plant_id.iloc[0]) == 2

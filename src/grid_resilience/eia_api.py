@@ -52,7 +52,10 @@ def _get(params, key, opener=urlopen):
     return payload["response"]
 
 
-def fetch_rto(start, end, output, key=None, page_size=5000, opener=urlopen):
+def fetch_rto(start, end, output, key=None, page_size=5000, opener=urlopen, bas=BAS):
+    bas = tuple(bas)
+    if not bas or len(set(bas)) != len(bas) or any(not str(b).isalnum() for b in bas):
+        raise ValueError("Invalid or duplicate BA identifiers")
     key = key or os.environ.get("EIA_API_KEY")
     if not key:
         raise RuntimeError("Set EIA_API_KEY in environment or GitHub Actions secrets")
@@ -67,7 +70,7 @@ def fetch_rto(start, end, output, key=None, page_size=5000, opener=urlopen):
         "frequency": "hourly",
         "data[0]": "value",
         "facets[type][]": ["D"],
-        "facets[respondent][]": list(BAS),
+        "facets[respondent][]": list(bas),
         "start": a.strftime("%Y-%m-%dT%H"),
         "end": end_hour,
         "sort[0][column]": "period",
@@ -88,13 +91,13 @@ def fetch_rto(start, end, output, key=None, page_size=5000, opener=urlopen):
             break
         if len(records) > 200_000:
             raise RuntimeError("Unexpected oversized EIA download; restrict date window")
-    demand = parse_rto(records, start, end)
+    demand = parse_rto(records, start, end, bas=bas)
     output = Path(output)
     output.parent.mkdir(parents=True, exist_ok=True)
     demand.rename_axis("timestamp").to_csv(output)
     (output.parent / (output.stem + "_provenance.json")).write_text(
         json.dumps({"source": ENDPOINT, "start_utc": start, "end_exclusive_utc": end,
-                    "BA_codes": list(BAS), "series_type": "D",
+                    "BA_codes": list(bas), "series_type": "D",
                     "timestamp_convention": "EIA API hourly period starts; UTC",
                     "rows": len(records), "key_saved": False}, indent=2) + "\n")
     return demand
@@ -105,9 +108,10 @@ def main():
     parser.add_argument("--start", default="2024-07-01")
     parser.add_argument("--end", default="2024-07-08")
     parser.add_argument("--output", default="data/processed/eia930_api_demand.csv")
+    parser.add_argument("--bas", nargs="+", default=list(BAS), help="BA respondents (e.g. CISO AZPS BPAT SRP)")
     args = parser.parse_args()
-    df = fetch_rto(args.start, args.end, args.output)
-    print(f"Validated {len(df)} hourly rows for {len(BAS)} BAs: {args.output}")
+    df = fetch_rto(args.start, args.end, args.output, bas=args.bas)
+    print(f"Validated {len(df)} hourly rows for {len(args.bas)} BAs: {args.output}")
 
 
 if __name__ == "__main__":

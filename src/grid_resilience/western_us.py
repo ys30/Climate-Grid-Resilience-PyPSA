@@ -39,18 +39,18 @@ def _column(df, *possibilities):
     raise ValueError(f"Required field missing; expected one of {possibilities}; got {list(df.columns)}")
 
 
-def load_eia930(path, start, end):
+def load_eia930(path, start, end, bas=BAS):
     """Read EIA-930 BALANCE records, using UTC *hour ending* timestamps.
 
     EIA's published table may carry multiple submissions; duplicate BA/time values
     are rejected rather than choosing one silently.
     """
     data = pd.read_csv(path, low_memory=False)
-    if {"timestamp", *BAS}.issubset(data.columns):
+    if {"timestamp", *bas}.issubset(data.columns):
         dates = pd.to_datetime(data["timestamp"], utc=True, errors="raise")
         if dates.duplicated().any():
             raise ValueError("Duplicate hourly timestamps in API file")
-        frame = data[list(BAS)].apply(pd.to_numeric, errors="raise")
+        frame = data[list(bas)].apply(pd.to_numeric, errors="raise")
         frame.index = dates
         idx = pd.date_range(pd.Timestamp(start, tz="UTC"),
                             pd.Timestamp(end, tz="UTC"), freq="h", inclusive="left")
@@ -63,7 +63,7 @@ def load_eia930(path, start, end):
     demand = _column(data, "Demand (MW)", "demand_mw", "Demand")
     x = data[[ba, t, demand]].copy()
     x.columns = ["ba", "hour_ending_utc", "demand_mw"]
-    x = x[x.ba.isin(BAS)]
+    x = x[x.ba.isin(bas)]
     x["timestamp"] = pd.to_datetime(x.hour_ending_utc, utc=True, errors="coerce") - pd.Timedelta(hours=1)
     x["demand_mw"] = pd.to_numeric(x.demand_mw, errors="coerce")
     start, end = pd.Timestamp(start, tz="UTC"), pd.Timestamp(end, tz="UTC")
@@ -73,21 +73,21 @@ def load_eia930(path, start, end):
     if x.duplicated(["ba", "timestamp"]).any():
         raise ValueError("Duplicate BA/hour records found; select a validated EIA-930 publication")
     expected = pd.date_range(start, end, freq="h", inclusive="left", tz="UTC")
-    out = x.pivot(index="timestamp", columns="ba", values="demand_mw").reindex(index=expected, columns=list(BAS))
+    out = x.pivot(index="timestamp", columns="ba", values="demand_mw").reindex(index=expected, columns=list(bas))
     if out.isna().any().any():
         missing = out.isna().sum()
         raise ValueError(f"Incomplete observed BA load; missing hourly records: {missing.to_dict()}")
     return out.astype(float)
 
 
-def fetch_era5(start, end, cache_dir):
+def fetch_era5(start, end, cache_dir, bas=BAS):
     """Open-Meteo archive ERA5, with UTC hourly timestamps and local source cache."""
     cache_dir = Path(cache_dir)
     cache_dir.mkdir(parents=True, exist_ok=True)
     end_inclusive = (pd.Timestamp(end) - pd.Timedelta(hours=1)).date().isoformat()
     start_day = pd.Timestamp(start).date().isoformat()
     frames = {}
-    for ba, (lat, lon) in BAS.items():
+    for ba, (lat, lon) in bas.items():
         path = cache_dir / f"era5_{ba}_{start_day}_{end_inclusive}.json"
         if not path.exists():
             params = dict(latitude=lat, longitude=lon, start_date=start_day,
@@ -110,7 +110,7 @@ def fetch_era5(start, end, cache_dir):
     return frames
 
 
-def build_model(demand, weather, scenario, reserve_margin=0.18, intertie_fraction=0.10, capacities=None):
+def build_model(demand, weather, scenario, reserve_margin=0.18, intertie_fraction=0.10, capacities=None, bas=BAS, interties=INTERTIES):
     """PyPSA linear dispatch with load shedding and illustrative links.
 
     Thermal capacities are explicitly *inferred* from each BA's observed peak,
@@ -123,7 +123,7 @@ def build_model(demand, weather, scenario, reserve_margin=0.18, intertie_fractio
     timestamps = demand.index
     n = pypsa.Network()
     n.set_snapshots(timestamps.tz_convert(None))
-    for ba in BAS:
+    for ba in bas:
         series = weather[ba].reindex(timestamps)
         if series.isna().any().any():
             raise ValueError(f"Weather timestamps do not cover demand for {ba}")
@@ -163,7 +163,7 @@ def build_model(demand, weather, scenario, reserve_margin=0.18, intertie_fractio
         n.add("Generator", f"{ba}_unserved", bus=ba, p_nom=peak * 10,
               marginal_cost=10000.0)
     # Illustrative capacity-limited exchange, not measured electrical line parameters.
-    for a, b in INTERTIES:
+    for a, b in interties:
         cap = min(float(demand[a].max()), float(demand[b].max()))
         n.add("Link", f"{a}_{b}", bus0=a, bus1=b,
               p_nom=cap * intertie_fraction * link_mult, p_min_pu=-1,

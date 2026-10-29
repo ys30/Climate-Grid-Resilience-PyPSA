@@ -19,7 +19,7 @@ FUEL_TECH = {
     "KER": "thermal", "PC": "thermal", "WO": "thermal",
     "BFG": "thermal", "OG": "thermal", "OBG": "thermal",
     "LFG": "thermal", "MSW": "thermal", "GEO": "geothermal",
-    "MWH": "storage", "PUR": "storage", "WH": "hydro",
+    "MWH": "storage", "PUR": "other", "WH": "hydro",
     "BLQ": "thermal", "SLW": "thermal", "TDF": "thermal",
     "AB": "thermal", "OBS": "thermal", "WDS": "thermal",
     "OTH": "other", "OT": "other", "PG": "thermal",

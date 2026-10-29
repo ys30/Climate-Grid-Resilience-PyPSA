@@ -32,7 +32,7 @@ def render(root="."):
     if comparison.is_file():
         frame = pd.read_csv(comparison)
         lines.extend(["", "### Assumed-fleet versus EIA partial-nameplate simulations", "",
-                      frame.to_markdown(index=False)])
+                      "```csv\\n" + frame.to_csv(index=False).strip() + "\\n```"])
     missing = [name for name, path in required.items() if not path.is_file()]
     lines.extend(["", f"**Missing outputs:** {', '.join(missing) if missing else 'none'}",
                   "", "Excluded storage, hypothetical transfers and generation availability",

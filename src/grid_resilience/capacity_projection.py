@@ -12,8 +12,8 @@ from .capacity_adapter import load_eia860_capacities
 SUPPORTED = {"thermal", "wind", "solar", "hydro", "nuclear", "geothermal"}
 EXCLUDED = {"storage", "other"}
 
-def project(source, output):
-    values = load_eia860_capacities(source)
+def project(source, output, bas=("CISO", "AZPS", "BPAT")):
+    values = load_eia860_capacities(source, required_bas=bas)
     output = Path(output)
     output.mkdir(parents=True, exist_ok=True)
     modeled = []
@@ -25,7 +25,7 @@ def project(source, output):
         raise ValueError("No supported generator nameplate assets")
     included_df = pd.DataFrame(modeled)
     excluded_df = pd.DataFrame(omitted, columns=["ba", "technology", "capacity_mw"])
-    for ba in ("CISO", "AZPS", "BPAT"):
+    for ba in bas:
         if not (included_df.ba == ba).any():
             raise ValueError("No modeled capacity for " + ba)
     included_df.to_csv(output / "modeled_nameplate_only.csv", index=False)
@@ -45,8 +45,9 @@ def main():
     p = argparse.ArgumentParser()
     p.add_argument("--source", required=True)
     p.add_argument("--output", default="data/processed/eia860_projection")
+    p.add_argument("--bas", nargs="+", default=["CISO", "AZPS", "BPAT"])
     a = p.parse_args()
-    included, excluded = project(a.source, a.output)
+    included, excluded = project(a.source, a.output, bas=tuple(a.bas))
     print("Modeled nameplate rows:", len(included),
           "excluded rows:", len(excluded),
           "excluded MW:", float(excluded.capacity_mw.sum()))

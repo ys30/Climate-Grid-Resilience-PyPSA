@@ -67,3 +67,22 @@ This is intentionally a **screening model**. Upgrade to EIA-860 generator invent
 ### Relationship to companion LUT-to-PyPSA repository
 
 [The LUT repository](https://github.com/ys30/lut-to-pypsa) extracts five-continent annual energy-service demand for 2020–2050, not BA-level measured hourly load. Do not join those tables directly to this 2024 regional hourly model. A research-quality multi-year coupling requires a justified continent-to-BA allocation, a calibrated hourly load profile and an annual-energy conservation test.
+
+
+## Phase 2: EIA-860 actual nameplate capacities (October 2026)
+
+An EIA-860 input adapter is now available, alongside the original synthetic-capacity mode.
+
+Official data: https://www.eia.gov/electricity/data/eia860/ (select **2024** final ZIP, unzip its operating generators and plant inventory spreadsheets). The exporter requires 3_1_Generator2024.xlsx (Operable tab) and 2___Plant2024.xlsx, with the actual downloaded file paths substituted below.
+
+    python -m grid_resilience.eia860 --generators data/external/3_1_Generator2024.xlsx --plants data/external/2___Plant2024.xlsx --year 2024 --output data/processed/eia860
+
+Use the resulting nameplate capacities in the existing EIA-930 + ERA5 scenario solver:
+
+    python -m grid_resilience.western_us --eia-csv data/external/EIA930_BALANCE_2024_Jul_Dec.csv --start 2024-07-01 --end 2024-07-08 --eia860-capacities data/processed/eia860/eia860_ba_technology_capacity.csv --output outputs/western_us_real_capacity
+
+The EIA-860 converter selects operational-status **OP** records only, joins generator and plant records using EIA plant IDs, preserves individual generator IDs, rejects duplicate rows, and exports a source-hash provenance manifest plus BA/technology nameplate totals. It **fails on unmapped fuel source codes** until the mapping has been explicitly reviewed and extended. EIA-860 spreadsheet layouts vary across editions; check actual column names and file headers before running. The converter is not a generator-location power flow model.
+
+**Important:** The solver's installed MW now come from EIA-860 when supplied, but its availability curves, weather derating assumptions, marginal costs, three-node link topology and intertie transfer limits remain illustrative. Hydro, nuclear and geothermal currently enter at constant maximum output; this should be replaced by appropriate operational time series. Storage and fuel technology types not explicitly handled must be modeled separately. EIA-860 is not an hourly forced-outage or plant availability dataset. **No completed empirical optimization or verified CI results are claimed in this commit.**
+
+A subsequent validation should reconcile EIA-860 BA installed MW with EIA-930 reported hourly generation and EIA-930 interchange, and replace the two hypothetical connections with licensed WECC line or interchange constraints.

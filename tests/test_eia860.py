@@ -104,3 +104,23 @@ def test_eia860_storage_is_classified_but_not_counted_as_firm_generation(tmp_pat
     units = read_860(generators, plants)
     assert set(units.technology) == {"thermal", "storage"}
     assert units.loc[units.technology.eq("storage"), "capacity_mw"].iloc[0] == 50
+
+
+def test_explicit_four_ba_inventory_includes_srp(tmp_path):
+    generators = tmp_path / "3_1_Generator2024.xlsx"
+    plants = tmp_path / "2___Plant2024.xlsx"
+    pd.DataFrame({
+        "Plant Code": [1, 2, 3, 4],
+        "Generator ID": ["A", "A", "A", "A"],
+        "Nameplate Capacity (MW)": [100, 110, 120, 130],
+        "Energy Source 1": ["NG", "NG", "NG", "NG"],
+        "Status": ["OP", "OP", "OP", "OP"],
+    }).to_excel(generators, sheet_name="Operable", index=False)
+    pd.DataFrame({
+        "Plant Code": [1, 2, 3, 4],
+        "Balancing Authority Code": ["CISO", "AZPS", "BPAT", "SRP"],
+    }).to_excel(plants, index=False)
+    default = read_860(generators, plants)
+    expanded = read_860(generators, plants, bas=("CISO", "AZPS", "BPAT", "SRP"))
+    assert set(default.ba) == {"CISO", "AZPS", "BPAT"}
+    assert set(expanded.ba) == {"CISO", "AZPS", "BPAT", "SRP"}

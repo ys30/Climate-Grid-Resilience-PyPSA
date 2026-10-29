@@ -9,11 +9,12 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--raw", default="data/external/eia860_2024")
     parser.add_argument("--output", default="data/processed/eia860")
+    parser.add_argument("--bas", nargs="+", default=["CISO", "AZPS", "BPAT"])
     args = parser.parse_args()
     manifest = obtain(args.raw)
     files = manifest["extraction"]
-    caps = export_860(files["generators"], files["plants"], args.output, year=2024)
-    audit = {"year": 2024, "n_ba_technology": int(len(caps)),
+    caps = export_860(files["generators"], files["plants"], args.output, year=2024, bas=tuple(args.bas))
+    audit = {"year": 2024, "bas": args.bas, "n_ba_technology": int(len(caps)),
              "capacity_totals_mw": {str(k): float(v) for k, v in
                  caps.groupby("ba").capacity_mw.sum().items()},
              "limitations": "EIA year-end nameplate; weather derates, hourly outages, imports and storage unvalidated"}

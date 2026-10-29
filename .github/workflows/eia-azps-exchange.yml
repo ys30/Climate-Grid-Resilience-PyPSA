@@ -1,0 +1,37 @@
+name: EIA observed AZPS pairwise interchange audit
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/eia-azps-exchange.yml'
+      - 'src/grid_resilience/eia_exchange_api.py'
+      - 'tests/test_eia_exchange_api.py'
+jobs:
+  exchange-audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    env:
+      EIA_API_KEY: ${{ secrets.EIA_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -e '.[dev,model]'
+      - run: python -m pytest -q tests/test_eia_exchange_api.py
+      - name: Fetch observed AZPS EIA-930 bilateral exchange
+        run: python -m grid_resilience.eia_exchange_api --start 2024-07-01 --end 2024-07-08 --output data/processed/azps_exchange.csv
+      - name: Upload observed exchanges and provenance
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: azps-observed-eia930-bilateral-exchanges
+          if-no-files-found: warn
+          retention-days: 30
+          path: |
+            data/processed/azps_exchange.csv
+            data/processed/azps_observed_pairwise_exchange_summary.csv
+            data/processed/azps_exchange_provenance.json

@@ -9,6 +9,7 @@ on:
       - 'src/grid_resilience/western_us.py'
       - 'src/grid_resilience/capacity_projection.py'
       - 'tests/test_four_ba.py'
+      - 'tests/test_local_shedding_isolation.py'
 jobs:
   four-ba-solve:
     runs-on: ubuntu-24.04

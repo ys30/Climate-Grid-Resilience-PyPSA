@@ -1,0 +1,58 @@
+name: AZPS ex-post external-export obligation sensitivity
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/azps-export-obligation.yml'
+      - 'src/grid_resilience/azps_external_export_sensitivity.py'
+      - 'tests/test_azps_external_export_sensitivity.py'
+jobs:
+  run-sensitivity:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 75
+    permissions:
+      contents: read
+    env:
+      EIA_API_KEY: ${{ secrets.EIA_API_KEY }}
+      OMP_NUM_THREADS: '1'
+      OPENBLAS_NUM_THREADS: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -e '.[dev,model]'
+      - run: python -m pytest -q
+      - name: Fetch four-BA observed demands
+        run: python -m grid_resilience.eia_api --bas CISO AZPS BPAT SRP --start 2024-07-01 --end 2024-07-08 --output data/processed/four_ba_demand.csv
+      - name: Fetch AZPS observed bilateral exchange
+        run: python -m grid_resilience.eia_exchange_api --start 2024-07-01 --end 2024-07-08 --output data/processed/azps_exchange.csv
+      - name: Audit AZPS outside-boundary exports
+        run: python -m grid_resilience.azps_boundary_coverage --exchange-csv data/processed/azps_exchange.csv --output outputs/azps_boundary_coverage
+      - name: Retrieve EIA-860 capacity inventory
+        run: python -m grid_resilience.run_eia860 --bas CISO AZPS BPAT SRP --output data/processed/eia860_four_ba
+      - name: Project generator-only capacities
+        run: python -m grid_resilience.capacity_projection --bas CISO AZPS BPAT SRP --source data/processed/eia860_four_ba/eia860_ba_technology_capacity.csv --output data/processed/four_ba_projection
+      - name: Cache ERA5 weather
+        uses: actions/cache@v4
+        with:
+          path: data/cache
+          key: era5-western-us-2024-07-v1
+      - name: Compare identical four-BA models with and without ex-post export obligation
+        run: |
+          python -m grid_resilience.azps_external_export_sensitivity \
+            --demand-csv data/processed/four_ba_demand.csv \
+            --capacities data/processed/four_ba_projection/modeled_nameplate_only.csv \
+            --boundary-csv outputs/azps_boundary_coverage/azps_boundary_hourly.csv \
+            --output outputs/azps_external_export_sensitivity
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: azps-ex-post-external-export-sensitivity
+          retention-days: 30
+          if-no-files-found: warn
+          path: |
+            outputs/azps_boundary_coverage/
+            outputs/azps_external_export_sensitivity/

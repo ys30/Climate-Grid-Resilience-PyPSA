@@ -1,0 +1,56 @@
+name: SRP fleet versus link mechanism decomposition
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/srp-mechanism.yml'
+      - 'src/grid_resilience/srp_mechanism_decomposition.py'
+      - 'tests/test_srp_mechanism_decomposition.py'
+jobs:
+  factorial:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    env:
+      EIA_API_KEY: ${{ secrets.EIA_API_KEY }}
+      OMP_NUM_THREADS: '1'
+      OPENBLAS_NUM_THREADS: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -e '.[dev,model]'
+      - run: python -m pytest -q
+      - name: Official EIA-860 four-BA fleet
+        run: python -m grid_resilience.run_eia860 --bas CISO AZPS BPAT SRP --output data/processed/eia860_four_ba
+      - name: Project supported four-BA generators
+        run: |
+          python -m grid_resilience.capacity_projection --bas CISO AZPS BPAT SRP --source data/processed/eia860_four_ba/eia860_ba_technology_capacity.csv --output data/processed/four_ba_projection
+      - name: Download actual hourly four-BA demand
+        run: |
+          python -m grid_resilience.eia_api --bas CISO AZPS BPAT SRP --start 2024-07-01 --end 2024-07-08 --output data/processed/four_ba_demand.csv
+      - name: Cache ERA5 source weather
+        uses: actions/cache@v4
+        with:
+          path: data/cache
+          key: era5-western-us-2024-07-v1
+      - name: Run four controlled 2x2 mechanism models
+        run: |
+          python -m grid_resilience.srp_mechanism_decomposition \
+            --demand-csv data/processed/four_ba_demand.csv \
+            --capacities data/processed/four_ba_projection/modeled_nameplate_only.csv \
+            --output outputs/srp_mechanism_decomposition
+      - name: Preserve scenario results and attribution caveats
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: srp-fleet-link-factorial
+          retention-days: 30
+          if-no-files-found: warn
+          path: |
+            outputs/srp_mechanism_decomposition/
+            data/processed/four_ba_projection/projection_provenance.json
+            data/processed/eia860_four_ba/inventory_audit.json

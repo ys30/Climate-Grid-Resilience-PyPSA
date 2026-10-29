@@ -16,6 +16,8 @@ on:
       - 'tests/test_capacity_adapter_guard.py'
       - 'src/grid_resilience/capacity_coverage.py'
       - 'tests/test_capacity_coverage.py'
+      - 'src/grid_resilience/capacity_projection.py'
+      - 'tests/test_capacity_projection.py'
 jobs:
   validate-inventory:
     runs-on: ubuntu-24.04
@@ -37,6 +39,9 @@ jobs:
         run: python -m grid_resilience.run_eia860
       - name: Audit capacity coverage before optimization
         run: python -m grid_resilience.capacity_coverage --capacity-csv data/processed/eia860/eia860_ba_technology_capacity.csv --output outputs/capacity_coverage
+      - name: Produce explicit generator-only projection with excluded-asset audit
+        run: |
+          python -m grid_resilience.capacity_projection --source data/processed/eia860/eia860_ba_technology_capacity.csv --output data/processed/eia860_projection
       - name: Retrieve matching observed demand (if API key configured)
         if: env.EIA_API_KEY != ''
         run: |
@@ -55,5 +60,6 @@ jobs:
           path: |
             data/external/eia860_2024/download_manifest.json
             data/processed/eia860/
+            data/processed/eia860_projection/
             outputs/nameplate_audit/
             outputs/capacity_coverage/

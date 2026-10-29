@@ -24,7 +24,7 @@ def decompose(demand,weather,capacity,intertie_fraction=0.10):
                     caps[key]=0.
         links=FOUR_LINKS if enable_srp_link else [l for l in FOUR_LINKS if "SRP" not in l]
         n=build_model(demand,weather,"observed_weather",capacities=caps,
-                      bas=FOUR_BAS,interties=links,
+                      bas=FOUR_BAS,interties=links,local_shedding=True,
                       intertie_fraction=intertie_fraction)
         status,termination=n.optimize(solver_name="highs")
         if (status,termination)!=("ok","optimal"):

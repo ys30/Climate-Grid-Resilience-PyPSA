@@ -156,3 +156,8 @@ The workflow uploads the structured capacity inventory, detailed plant-unit mapp
 ### EIA-860 run #1 download repair (2026-10-29)
 
 The first inventory Actions run failed at ZIP magic-byte validation, before Excel parsing. The original download URL omitted the `archive/` segment. The 2024 ZIP link on the EIA official index currently points to `https://www.eia.gov/electricity/data/eia860/archive/xls/eia8602024.zip`. The downloader now follows that exact official address and tolerates year-prefixed official workbook filenames. This URL change is committed but the end-to-end official inventory ETL must be rerun before claiming actual capacity totals.
+
+
+## Phase 7 — observed peak versus nameplate coverage audit
+
+The EIA-860 inventory workflow now optionally runs the official EIA API v2 hourly observed demand fetch (when repository secret EIA_API_KEY exists), then runs `python -m grid_resilience.nameplate_audit` to output `nameplate_vs_observed_load.csv` and `comparison_provenance.json`. These compare nameplate MW with the measured hourly BA peak in July 1–7, 2024, without treating installed nameplate as guaranteed dispatchable capacity. This is an inventory-coverage audit only; it is neither a WECC power-flow validation nor a physical reserve-margin estimate. The unassigned BA audit should be examined before treating generator totals as complete. The CI will execute on relevant source updates; successful real-data outputs are still subject to a completed Actions run.

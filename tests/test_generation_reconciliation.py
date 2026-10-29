@@ -11,7 +11,7 @@ def test_independent_generation_ng_schema_and_alignment():
 
 def test_ng_omitted_hour_rejected():
     with pytest.raises(ValueError,match="Missing hourly"):
-        parse_generation([], "2024-07-01","2024-07-01 01:00",("AZPS",))
+        parse_generation([{"period":"2024-07-01T00","respondent":"SRP","type":"NG","value":"100"}], "2024-07-01","2024-07-01 01:00",("AZPS",))
 
 def test_independent_generation_reconciliation(tmp_path):
     a=tmp_path/"balance.csv";n=tmp_path/"ng.csv"

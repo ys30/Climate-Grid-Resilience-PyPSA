@@ -12,6 +12,11 @@ The following **versioned SVG figures are stored in the repository**, so they re
 
 ### Hourly shortfall curve from solved PyPSA networks (verified)
 
+![Verified hourly AZPS PyPSA simulated unmet load, July 2024](figures/azps_hourly_shortfall.svg)
+
+**Permanently versioned result:** [Hourly figure SVG](figures/azps_hourly_shortfall.svg), generated from optimized network output and archived in Git, rather than an expiring Actions attachment.
+
+
 The [successful July four-BA run (41003755660)](https://github.com/ys30/Climate-Grid-Resilience-PyPSA/actions/runs/41003755660) includes **actual** hourly AZPS model outputs and an automatically generated `azps_hourly_shortfall.png`, `.svg` and `.csv` in its `four-ba-srp-pypsa-screening` artifact, under `outputs/four_ba/figures/`. The source plotting script is [`plot_hourly_shortfall.py`](src/grid_resilience/plot_hourly_shortfall.py). These are not measured outages. Note: Action artifacts expire after 30 days; the other three figures above are versioned permanently in Git.
 
 ### Seasonal AZPS modeled shortage

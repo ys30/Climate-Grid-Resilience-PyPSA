@@ -27,5 +27,6 @@ jobs:
           git add figures/azps_partner_exchange_grouped_bars.svg figures/azps_partner_exchange_grouped_bars.png
           if ! git diff --cached --quiet; then
             git commit -m 'Publish audited grouped AZPS partner exchange bars'
-            git push
+            git pull --rebase origin main
+            git push origin HEAD:main
           fi

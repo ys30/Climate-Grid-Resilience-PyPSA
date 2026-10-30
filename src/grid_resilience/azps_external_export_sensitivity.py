@@ -62,7 +62,14 @@ def main():
     p.add_argument("--output",default="outputs/azps_external_export_sensitivity")
     a=p.parse_args()
     demand=load_eia930(a.demand_csv,a.start,a.end,bas=FOUR_BAS)
-    # Boundary CSV must be calculated excluding modeled CISO/SRP partners.\n    # Reject mismatched scope when the boundary audit provenance is available.\n    meta=Path(a.boundary_csv).parent/"azps_boundary_summary.json"\n    if not meta.is_file():\n        raise ValueError("Missing AZPS boundary audit provenance; cannot verify excluded BA scope")\n    scope=json.loads(meta.read_text())\n    if set(scope.get("modeled_neighbors",[])) != {"CISO","SRP"}:\n        raise ValueError("Boundary scope must exclude modeled AZPS-CISO and AZPS-SRP exchanges")\n    obligation=prepare_obligation(a.boundary_csv,demand.index)
+    # Exclude the modeled CISO and SRP trading partners to avoid double counting.
+    meta=Path(a.boundary_csv).parent/"azps_boundary_summary.json"
+    if not meta.is_file():
+        raise ValueError("Missing AZPS boundary audit provenance; cannot verify excluded BA scope")
+    scope=json.loads(meta.read_text())
+    if set(scope.get("modeled_neighbors",[])) != {"CISO","SRP"}:
+        raise ValueError("Boundary scope must exclude modeled AZPS-CISO and AZPS-SRP exchanges")
+    obligation=prepare_obligation(a.boundary_csv,demand.index)
     weather=fetch_era5(a.start,a.end,a.cache,bas=FOUR_BAS)
     caps=load_eia860_capacities(a.capacities,required_bas=tuple(FOUR_BAS))
     if any(t in ("storage","other") and mw>0 for (_,t),mw in caps.items()):

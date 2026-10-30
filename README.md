@@ -8,6 +8,9 @@ A reproducible, visualization-first demonstration of electricity adequacy under 
 
 ## Geographic results — official US state basemap (2024)
 
+**BA polygon vintage audit:** HIFLD candidate control-area features have `YEAR=2018` (source 2019; validated 2020); they are **not verified 2024 BA boundaries**. [Read the feature-level provenance audit](reports/HIFLD_BA_FEATURE_VINTAGE_VERIFIED.md). The displayed 2024 Census basemap shows real *state* boundaries only.
+
+
 > **Geographic accuracy warning:** These state-basemap figures do **not** depict BA service-territory polygons or physical transmission routes. An AI-generated colorful map depicting WALC as Washington Area, TEPC in Mexico, the entire state of Arizona as AZPS, or seven uniformly outward partner arrows is **incorrect and rejected**. Read the [map accuracy audit](reports/MAP_ACCURACY_AUDIT.md) before reuse.
 
 

@@ -4,6 +4,11 @@
 
 ## Figures and illustrative geography
 
+![Verified AZPS hourly simulated shortfall from 168-hour PyPSA runs](../figures/azps_hourly_shortfall.svg)
+
+The hourly line plot is generated from solved PyPSA network output, with three scenario series. It is **not a record of actual outages**.
+
+
 The following SVGs are versioned in Git and render directly in GitHub.
 
 ![AZPS modeled unserved energy by sampled season](../figures/azps_four_season_shortfall.svg)

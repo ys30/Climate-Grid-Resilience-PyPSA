@@ -1,0 +1,44 @@
+name: Publish verified hourly model SVG
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/publish-hourly-figure.yml'
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Download successful and immutable model-run figure
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh run download 41003755660 --repo "${{ github.repository }}" --name four-ba-srp-pypsa-screening --dir downloaded
+          test -s downloaded/outputs/four_ba/figures/azps_hourly_shortfall.svg
+          test -s downloaded/outputs/four_ba/figures/azps_hourly_shortfall.csv
+      - name: Publish and verify figure
+        run: |
+          mkdir -p figures
+          cp downloaded/outputs/four_ba/figures/azps_hourly_shortfall.svg figures/azps_hourly_shortfall.svg
+          python - <<'PY'
+          import xml.etree.ElementTree as ET
+          from pathlib import Path
+          p=Path("figures/azps_hourly_shortfall.svg")
+          assert ET.parse(p).getroot().tag.endswith("svg")
+          assert p.stat().st_size>1000
+          PY
+      - name: Commit verified SVG
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add figures/azps_hourly_shortfall.svg
+          if ! git diff --cached --quiet; then
+            git commit -m "Preserve verified hourly AZPS PyPSA shortfall figure"
+            git push
+          fi

@@ -33,6 +33,10 @@ The following SVGs are versioned in Git and render directly in GitHub.
 
 ![Per-partner AZPS EIA-930 net imports and exports, by sampled week](../figures/azps_partner_exchange_heatmap.svg)
 
+![Grouped partner exchange in four sampled weeks](../figures/azps_partner_exchange_grouped_bars.svg)
+
+**Seasonal grouped bars replace the nearly identical four-state-panel geographic display as the quantitative comparison.** Positive = net imports to AZPS, negative = net exports from AZPS; observed data for four 168-hour sampled weeks, not complete seasons.
+
 The underlying [audited per-partner CSV](../data/verified/seasonal_partner_exchange.csv) preserves per-partner sign; positive values are imports to AZPS and negative values exports from AZPS. The overall combined outside-boundary net export **does not** imply every reported counterpart is an export destination.
 
 ## Research questions

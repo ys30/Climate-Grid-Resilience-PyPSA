@@ -27,6 +27,12 @@ These figures use the **US Census Bureau 2024 cartographic state boundaries**. B
 
 The seven nonmodeled partners are listed rather than plotted at invented coordinates.
 
+### Verified partner-by-season import/export heatmap
+
+![Data-derived EIA-930 AZPS partner exchange directions by sampled week](figures/azps_partner_exchange_heatmap.svg)
+
+**Read the signs, not a fictional flow map:** positive = AZPS net imports from that partner, negative = AZPS net exports to that partner (MW). The figure is built from the [verified per-partner CSV](data/verified/seasonal_partner_exchange.csv). Some partner directions differ from the *combined* outside-boundary net-export direction. Missing observations are not filled with fabricated data.
+
 ### Four sampled-week AZPS exchange maps
 
 ![Four-season sampled AZPS reported net exports to omitted BAs](figures/azps_four_season_census_maps.svg)

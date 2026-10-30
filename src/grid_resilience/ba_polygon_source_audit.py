@@ -15,6 +15,21 @@ SOURCES={
 }
 REQUIRED={"CISO","AZPS","BPAT","SRP","WALC","LDWP","PNM","TEPC","PACE","WACM","IID"}
 
+CANDIDATES={
+  "ARIZONA PUBLIC SERVICE COMPANY":"AZPS",
+  "CALIFORNIA INDEPENDENT SYSTEM OPERATOR":"CISO",
+  "BONNEVILLE POWER ADMINISTRATION":"BPAT",
+  "SALT RIVER PROJECT":"SRP",
+  "LOS ANGELES DEPARTMENT OF WATER AND POWER":"LDWP",
+  "PUBLIC SERVICE COMPANY OF NEW MEXICO":"PNM",
+  "TUCSON ELECTRIC POWER COMPANY":"TEPC",
+  "PACIFICORP - EAST":"PACE",
+  "IMPERIAL IRRIGATION DISTRICT":"IID",
+  # Candidate organizational names require independent BA identification.
+  "WESTERN AREA POWER ADMINISTRATION - DESERT SOUTHWEST REGION":"WALC",
+  "WESTERN AREA POWER ADMINISTRATION - ROCKY MOUNTAIN REGION":"WACM",
+}
+
 def request(url,params):
     address=url+"?"+urlencode(params)
     with urlopen(address,timeout=50) as response:
@@ -37,7 +52,19 @@ def inventory():
             "outFields":name_field,"returnDistinctValues":"true"})
         raw=sorted({str(f.get("attributes",{}).get(name_field,"")).strip()
                     for f in ids.get("features",[]) if f.get("attributes",{}).get(name_field)})
+        metadata=[]
+        if source=="hifld_control_areas":
+            selected=list(CANDIDATES)
+            for name in selected:
+                escaped=name.replace("'","''")
+                match=request(url+"/query",{"f":"json","where":f"NAME = '{escaped}'",
+                    "returnGeometry":"false","outFields":"NAME,SOURCE,SOURCEDATE,VAL_DATE,YEAR,VAL_METHOD"})
+                attrs=[f.get("attributes",{}) for f in match.get("features",[])]
+                metadata.append({"requested_code":CANDIDATES[name],"name":name,
+                    "matched_features":len(attrs),"feature_metadata":attrs,
+                    "mapping_status":"candidate_not_2024_verified"})
         result[source]={
+          "candidate_feature_metadata":metadata,
           "source":url,
           "name_field":name_field,
           "schema_fields":fields,

@@ -4,7 +4,37 @@
 
 A reproducible, visualization-first demonstration of electricity adequacy under stylized heatwave and compound climate-stress scenarios. It produces hourly shortfall profiles, unserved energy, peak shortfall, and shortage duration.
 
-> **Evidence boundary:** All demand, supply and stress factors are **synthetic assumptions**. This is not a climate projection, a real-grid resilience assessment, or a solved PyPSA model. PyPSA integration is a planned extension.
+> **Current status (October 2026):** The repository now contains both the original synthetic demonstration and **successfully solved** EIA-930 demand + ERA5 weather + partial EIA-860 generator-only PyPSA experiments for a four-BA western-US subset. **The network topology, transfer limits, weather-response coefficients, generator availability and storage omissions remain illustrative.** These outputs are modeled shortfalls, not observed blackouts or validated grid-reliability forecasts. Some older sections below preserve the step-by-step development history.
+
+## Verified research workflow and evidence (latest)
+
+| Component | Verified GitHub Actions run | Key finding and limitations |
+|---|---|---|
+| Matched three-BA vs four-BA | [40946005080](https://github.com/ys30/Climate-Grid-Resilience-PyPSA/actions/runs/40946005080) | AZPS July baseline screening shortfall changed from ~60,359 to ~22,168 MWh with SRP; hypothetical link |
+| SRP fleet × AZPS–SRP link, 2×2 | [40945995665](https://github.com/ys30/Climate-Grid-Resilience-PyPSA/actions/runs/40945995665) | Both SRP fleet and assumed link required for modeled AZPS reduction; artificial shortage cannot flow to neighbors |
+| EIA-930 generation/demand/interchange | [40943958855](https://github.com/ys30/Climate-Grid-Resilience-PyPSA/actions/runs/40943958855) | 168 hourly AZPS accounting residuals zero; accounting identity, **not independent physical validation** |
+| Model vs observed SRP exchange | [40947395649](https://github.com/ys30/Climate-Grid-Resilience-PyPSA/actions/runs/40947395649) | Model does **not** replicate observed ~4,536 MW mean SRP→AZPS interchange; link limits hypothetical |
+| AZPS missing exchange partner audit | [40950313035](https://github.com/ys30/Climate-Grid-Resilience-PyPSA/actions/runs/40950313035) | Seven missing counterparties; outside-boundary AZPS exports in all 168 July hours |
+| Four-season EIA-930 boundary audit | [40994479108](https://github.com/ys30/Climate-Grid-Resilience-PyPSA/actions/runs/40994479108) | 667/672 sampled hours net export to missing counterparties; **four sample weeks, not whole seasons** |
+| Four-season four-BA screening | [40994939078](https://github.com/ys30/Climate-Grid-Resilience-PyPSA/actions/runs/40994939078) | 12 weather × season scenarios solved; AZPS screening shortfalls peak in sampled summer week |
+| Export-obligation sensitivity (with BA scope verification) | [40995861963](https://github.com/ys30/Climate-Grid-Resilience-PyPSA/actions/runs/40995861963) | Ex-post fixed net-export diagnostic; not calibrated dispatch, external unmet demand separately counted |
+
+**Research conclusions must distinguish:** observed EIA-930 BA reporting, official EIA-860 nameplate capacity, ERA5 historical weather, and **hypothetical dispatch/network assumptions**. The model is useful for research methodology, data provenance and structural/parameter sensitivity; it is **not** validated to predict physical interchange or actual outage rates.
+
+### Verified reports
+
+- [Four-season modeled shortfalls](reports/2024-four-season-four-ba-adequacy-verified.md)
+- [Four-season observed boundary exchange](reports/2024-azps-four-season-boundary-verified.md)
+- [SRP fleet/link mechanism after virtual-shortfall fix](reports/2024-07-srp-mechanism-corrected-verified.md)
+- [Observed/model flow mismatch](reports/2024-07-srp-flow-validation-observed-mismatch.md)
+- [External-boundary obligation sensitivity](reports/2024-07-azps-external-export-sensitivity-verified.md)
+- [Demand and interchange accounting review](reports/eia930-demand-interchange-accounting-review.md)
+
+### Remaining work before quantitative reliability claims
+
+Documented physical transfer limits and other neighboring BA representation, operational generator availability and storage energy constraints, longer observation windows, and independent forecast/out-of-sample calibration are **not complete**.
+
+
 
 ## Research questions
 

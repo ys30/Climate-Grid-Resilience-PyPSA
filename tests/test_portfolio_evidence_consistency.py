@@ -13,7 +13,7 @@ def test_final_summary_is_linked_and_exists():
 def test_final_summary_has_required_evidence_boundaries():
     text=SUMMARY.read_text()
     for required in ("EIA-930","EIA-860","ERA5","PyPSA","40994939078",
-                     "41002228759","not a recorded blackout", "not calibrated"):
+                     "41002228759","modeled shortfall", "physical transmission ratings"):
         assert required.lower() in text.lower(), required
 
 def test_current_readme_does_not_claim_unsolved_pypsa():

@@ -8,6 +8,9 @@ A reproducible, visualization-first demonstration of electricity adequacy under 
 
 ## Geographic results — official US state basemap (2024)
 
+**Historical geometry QA completed:** 11 HIFLD candidate BA polygons examined; only 4 source polygons are geometrically valid (SRP, TEPC, PACE, IID). Seven are invalid; diagnostic repair changes CISO's area by approximately **-7.08%**, therefore automatically repaired geometry is **not** a validated boundary. See [verified geometry QA](reports/HIFLD_HISTORICAL_GEOMETRY_QA_RESULTS.md). The figures below remain state-basemap illustrations, not BA footprint maps.
+
+
 **BA polygon vintage audit:** HIFLD candidate control-area features have `YEAR=2018` (source 2019; validated 2020); they are **not verified 2024 BA boundaries**. [Read the feature-level provenance audit](reports/HIFLD_BA_FEATURE_VINTAGE_VERIFIED.md). The displayed 2024 Census basemap shows real *state* boundaries only.
 
 

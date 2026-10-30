@@ -1,0 +1,45 @@
+name: Four-season AZPS reported boundary exchange audit
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/azps-seasonal-boundary.yml'
+      - 'src/grid_resilience/azps_seasonal_boundary.py'
+      - 'src/grid_resilience/azps_boundary_coverage.py'
+jobs:
+  seasonal:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    env:
+      EIA_API_KEY: ${{ secrets.EIA_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -e '.[dev,model]'
+      - run: python -m pytest -q
+      - name: Audit four independent weekly windows from 2024
+        run: |
+          set -euo pipefail
+          for entry in 'winter 2024-01-15 2024-01-22' 'spring 2024-04-15 2024-04-22' 'summer 2024-07-01 2024-07-08' 'autumn 2024-10-14 2024-10-21'; do
+            read -r season start end <<< "$entry"
+            python -m grid_resilience.eia_exchange_api --start "$start" --end "$end" --output "data/processed/${season}_azps_exchange.csv"
+            python -m grid_resilience.azps_boundary_coverage --exchange-csv "data/processed/${season}_azps_exchange.csv" --output "outputs/seasonal_input/${season}"
+          done
+      - name: Compare seasonal hourly boundary signs and magnitudes
+        run: |
+          python -m grid_resilience.azps_seasonal_boundary --root outputs/seasonal_input --output outputs/seasonal_azps
+      - name: Publish auditable seasonal results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: azps-2024-four-season-boundary
+          retention-days: 30
+          if-no-files-found: warn
+          path: |
+            outputs/seasonal_input/
+            outputs/seasonal_azps/

@@ -22,8 +22,9 @@ def audit(exchange_csv, output, modeled_neighbors=("CISO","SRP")):
     if x.empty:
         raise ValueError("No reported exchange")
     counts=x.groupby("timestamp").size()
-    if counts.size!=168 or counts.index.difference(pd.date_range(counts.index.min(),periods=168,freq="h")).size:
-        raise ValueError("Expected exactly 168 consecutive hourly AZPS observations")
+    expected=pd.date_range(counts.index.min(),counts.index.max(),freq="h")
+    if counts.size!=len(expected) or not counts.index.equals(expected):
+        raise ValueError("AZPS exchange hours must form a consecutive UTC hourly window")
     x["modeled_neighbor"]=x.to_ba.isin(modeled_neighbors)
     x["azps_net_import_mw"]=-x.reported_value
     x["abs_exchange_mw"]=x.reported_value.abs()

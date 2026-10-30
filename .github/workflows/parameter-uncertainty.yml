@@ -1,0 +1,50 @@
+name: Four-BA link and thermal parameter sensitivity
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/parameter-uncertainty.yml'
+      - 'src/grid_resilience/parameter_uncertainty.py'
+      - 'tests/test_parameter_uncertainty.py'
+jobs:
+  evaluate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 70
+    permissions:
+      contents: read
+    env:
+      EIA_API_KEY: ${{ secrets.EIA_API_KEY }}
+      OMP_NUM_THREADS: '1'
+      OPENBLAS_NUM_THREADS: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -e '.[dev,model]'
+      - run: python -m pytest -q
+      - name: Download 4-BA observed demand
+        run: python -m grid_resilience.eia_api --bas CISO AZPS BPAT SRP --start 2024-07-01 --end 2024-07-08 --output data/processed/four_ba_demand.csv
+      - name: Download EIA-860 nameplate
+        run: python -m grid_resilience.run_eia860 --bas CISO AZPS BPAT SRP --output data/processed/eia860_four_ba
+      - name: Project generator-only input
+        run: python -m grid_resilience.capacity_projection --bas CISO AZPS BPAT SRP --source data/processed/eia860_four_ba/eia860_ba_technology_capacity.csv --output data/processed/four_ba_projection
+      - uses: actions/cache@v4
+        with:
+          path: data/cache
+          key: era5-western-us-2024-07-v1
+      - name: Evaluate 9 independent PyPSA configurations
+        run: |
+          python -m grid_resilience.parameter_uncertainty \
+            --demand-csv data/processed/four_ba_demand.csv \
+            --capacities data/processed/four_ba_projection/modeled_nameplate_only.csv \
+            --output outputs/parameter_uncertainty
+      - name: Archive modeled parameter sensitivity
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: four-ba-parameter-uncertainty
+          retention-days: 30
+          if-no-files-found: warn
+          path: outputs/parameter_uncertainty/

@@ -8,6 +8,9 @@ A reproducible, visualization-first demonstration of electricity adequacy under 
 
 ## Geographic results — official US state basemap (2024)
 
+**[Map provenance, source shapefile and reproduction notes](reports/GEOGRAPHIC_FIGURES_PROVENANCE.md)** — geographic layer from US Census 2024, BA weather-proxy points, not actual BA territory polygons.
+
+
 These figures use the **US Census Bureau 2024 cartographic state boundaries**. BA dots are **representative ERA5 sampling points, not official BA centers or polygons**. Straight lines are **assumed model connections**, not physical transmission routes.
 
 ### Four-BA network on the western US state basemap

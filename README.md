@@ -196,6 +196,8 @@ This is intentionally a **screening model**. Upgrade to EIA-860 generator invent
 
 ## Phase 2: EIA-860 actual nameplate capacities (October 2026)
 
+**Development chronology:** Phase 2 documents the EIA-860 adapter, not the final status of model execution. Subsequent successful historical-input screening solves are documented in Phase 5 and later sections; these remain uncalibrated scenario results, not historical outage validation.
+
 An EIA-860 input adapter is now available, alongside the original synthetic-capacity mode.
 
 Official data: https://www.eia.gov/electricity/data/eia860/ (select **2024** final ZIP, unzip its operating generators and plant inventory spreadsheets). The exporter requires 3_1_Generator2024.xlsx (Operable tab) and 2___Plant2024.xlsx, with the actual downloaded file paths substituted below.
@@ -263,6 +265,17 @@ The new diagnostics command is:
 The new sensitivity command independently solves 12 alternative baseline models with assumed reserve margin of 18%, 30%, 45% or 60% and hypothetical intertie fractions of 0%, 10% or 20%:
 
     python -m grid_resilience.sensitivity --eia-csv data/processed/eia930_api_demand.csv --start 2024-07-01 --end 2024-07-08 --cache data/cache --output outputs/western_us/baseline_sensitivity.csv
+
+**Verified output from the completed 12-run sensitivity experiment** (baseline modeled unserved energy, **GWh**; July 1–7, 2024):
+
+| Assumed reserve margin | Intertie 0% | Intertie 10% | Intertie 20% |
+|:--|--:|--:|--:|
+| 18% | 36.834 | **23.934** | 20.619 |
+| 30% | 5.649 | 0.817 | 0.000 |
+| 45% | 0.000 | 0.000 | 0.000 |
+| 60% | 0.000 | 0.000 | 0.000 |
+
+The 18%-reserve/10%-intertie entry reproduces **23,934.459 MWh** (rounded to 23.934 GWh), consistent with the Phase 5 reported **23,934.46 MWh**. At 10% assumed interties, moving from 18% to 30% reserve lowers modeled unserved energy to **817.138 MWh**. These twelve cases are **three-BA screening runs** (CISO, AZPS, BPAT) with inferred capacity/reserve assumptions, **not** the later four-BA EIA-860 capacity sensitivity experiment. Reserve margins and intertie fractions are **hypothetical input parameters, not measured WECC capacity margins or verified transmission ratings**. Zero modeled shortfall is not evidence of zero observed outage risk. Source: [verified Run #4 report](reports/2024-07-screening-sensitivity-run4.md) and [successful GitHub Actions run #40923575645](https://github.com/ys30/Climate-Grid-Resilience-PyPSA/actions/runs/40923575645).
 
 Both steps are now included in the manually triggered Western US solve GitHub workflow. Changing assumptions to eliminate modeled shortages is NOT validation or calibration. For research-grade results, compare with EIA-930 measured generation and actual interchanges, connect the EIA-860 inventory, then source or justify physically credible transmission capabilities.
 

@@ -2,6 +2,18 @@
 
 **Scope:** Four balancing authorities (CISO, AZPS, BPAT and SRP), with an original three-BA control. This is a **screening model** of four selected BAs, not the Western Interconnection as a whole.
 
+## Figures and illustrative geography
+
+The following SVGs are versioned in Git and render directly in GitHub.
+
+![AZPS modeled unserved energy by sampled season](../figures/azps_four_season_shortfall.svg)
+
+![AZPS assumed link and thermal capacity sensitivity matrix](../figures/azps_parameter_sensitivity.svg)
+
+![Representative BA ERA5 locations and hypothetical network topology](../figures/four_ba_topology_schematic.svg)
+
+**Map limitation:** Representative sampling point locations only, not balancing-authority boundaries or physical transmission line paths. **Chart limitation:** Numbers are verified deterministic model outcomes, not historical blackouts.
+
 ## Research questions
 
 1. How sensitive are modeled hourly resource-adequacy shortages to stylized hot-weather and compound stress?

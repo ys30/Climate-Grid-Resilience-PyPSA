@@ -45,11 +45,11 @@ The seven nonmodeled partners are listed rather than plotted at invented coordin
 
 **Read the signs, not a fictional flow map:** positive = AZPS net imports from that partner, negative = AZPS net exports to that partner (MW). The figure is built from the [verified per-partner CSV](data/verified/seasonal_partner_exchange.csv). Some partner directions differ from the *combined* outside-boundary net-export direction. Missing observations are not filled with fabricated data.
 
-### Four sampled-week AZPS exchange maps
+### Seasonal partner exchange comparison — grouped bars
 
-![Four-season sampled AZPS reported net exports to omitted BAs](figures/azps_four_season_census_maps.svg)
+![Observed AZPS imports and exports by external BA partner in four sampled weeks](figures/azps_partner_exchange_grouped_bars.svg)
 
-Winter, spring, summer and autumn panels cover **one week each** in 2024, not full-season totals. All shown quantities are **reported BA interchange**, not physically routed line flows. Source: [four-season audit](reports/2024-azps-four-season-boundary-verified.md).
+**Above zero means AZPS imports; below zero means AZPS exports.** Each color is one sampled 168-hour week, not a complete season. Bars come directly from the [audited partner CSV](data/verified/seasonal_partner_exchange.csv). The old four-panel state map repeated identical geography; it is retained as a [supplemental historical visualization](figures/azps_four_season_census_maps.svg), **not** the main seasonal evidence.
 
 ## Visual results and model geography
 

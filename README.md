@@ -6,6 +6,12 @@ A reproducible, visualization-first demonstration of electricity adequacy under 
 
 > **Current status (October 2026):** The repository now contains both the original synthetic demonstration and **successfully solved** EIA-930 demand + ERA5 weather + partial EIA-860 generator-only PyPSA experiments for a four-BA western-US subset. **The network topology, transfer limits, weather-response coefficients, generator availability and storage omissions remain illustrative.** These outputs are modeled shortfalls, not observed blackouts or validated grid-reliability forecasts. Some older sections below preserve the step-by-step development history.
 
+## Portfolio V1.0 — preserved research screening release
+
+**This repository is retained as the published Portfolio V1.0 project.** Its four-BA, four sampled-week, assumption-conditioned PyPSA results, observed EIA-930 interchange audit, figures, and [final technical summary](reports/FINAL_TECHNICAL_SUMMARY.md) remain available for portfolio demonstration. They are **not** historical blackout reconstructions or calibrated Western Interconnection reliability forecasts.
+
+**Separate manuscript development:** The proposed independent paper will use a new repository, provisionally `Climate-Grid-Resilience-Research`, for multi-year historical validation, factorial climate-hazard experiments, transfer-constraint mechanisms and independent validation. This new repository has **not yet been created**. Experimental V2 planning files already committed here are retained as development history; new V2 analysis should continue only in the separate research repository after it exists. This keeps portfolio results stable and avoids presenting preliminary V2 models as final findings.
+
 ## Research V2 — independent climate resilience paper
 
 The next phase separates this paper from the energy-transition/storage-economics analysis in Project B. [Research questions, calibration gates and reproducibility plan](reports/RESEARCH_V2_INDEPENDENT_PAPER_PLAN.md).

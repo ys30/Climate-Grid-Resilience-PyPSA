@@ -1,0 +1,57 @@
+name: Four-season four-BA PyPSA robustness screening
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/seasonal-four-ba.yml'
+      - 'src/grid_resilience/seasonal_four_ba_summary.py'
+      - 'tests/test_seasonal_four_ba_summary.py'
+jobs:
+  seasonal-model:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    permissions:
+      contents: read
+    env:
+      EIA_API_KEY: ${{ secrets.EIA_API_KEY }}
+      OMP_NUM_THREADS: '1'
+      OPENBLAS_NUM_THREADS: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -e '.[dev,model]'
+      - run: python -m pytest -q
+      - name: Fetch 2024 four-BA EIA-860 inventory once
+        run: python -m grid_resilience.run_eia860 --bas CISO AZPS BPAT SRP --output data/processed/eia860_four_ba
+      - name: Generator-only capacity projection
+        run: python -m grid_resilience.capacity_projection --bas CISO AZPS BPAT SRP --source data/processed/eia860_four_ba/eia860_ba_technology_capacity.csv --output data/processed/four_ba_projection
+      - name: Cache historical weather across reruns
+        uses: actions/cache@v4
+        with:
+          path: data/cache
+          key: era5-western-us-2024-seasonal-v1
+      - name: Solve 4 BAs for four independent seasonal sampled weeks
+        run: |
+          set -euo pipefail
+          for entry in 'winter 2024-01-15 2024-01-22' 'spring 2024-04-15 2024-04-22' 'summer 2024-07-01 2024-07-08' 'autumn 2024-10-14 2024-10-21'; do
+            read -r season start end <<< "$entry"
+            python -m grid_resilience.eia_api --bas CISO AZPS BPAT SRP --start "$start" --end "$end" --output "data/processed/demand_${season}.csv"
+            python -m grid_resilience.four_ba --demand-csv "data/processed/demand_${season}.csv" --capacities data/processed/four_ba_projection/modeled_nameplate_only.csv --start "$start" --end "$end" --cache data/cache --output "outputs/seasonal_four_ba/${season}"
+          done
+      - name: Validate and summarize four-season results
+        run: python -m grid_resilience.seasonal_four_ba_summary --root outputs/seasonal_four_ba --output outputs/seasonal_four_ba_summary
+      - name: Archive seasonal model outputs and assumptions
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: four-season-four-ba-screening
+          retention-days: 30
+          if-no-files-found: warn
+          path: |
+            outputs/seasonal_four_ba_summary/
+            outputs/seasonal_four_ba/*/metrics.csv
+            outputs/seasonal_four_ba/*/provenance.json
+            data/processed/four_ba_projection/projection_provenance.json

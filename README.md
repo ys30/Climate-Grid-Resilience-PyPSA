@@ -6,6 +6,12 @@ A reproducible, visualization-first demonstration of electricity adequacy under 
 
 > **Current status (October 2026):** The repository now contains both the original synthetic demonstration and **successfully solved** EIA-930 demand + ERA5 weather + partial EIA-860 generator-only PyPSA experiments for a four-BA western-US subset. **The network topology, transfer limits, weather-response coefficients, generator availability and storage omissions remain illustrative.** These outputs are modeled shortfalls, not observed blackouts or validated grid-reliability forecasts. Some older sections below preserve the step-by-step development history.
 
+## Research V2 — independent climate resilience paper
+
+The next phase separates this paper from the energy-transition/storage-economics analysis in Project B. [Research questions, calibration gates and reproducibility plan](reports/RESEARCH_V2_INDEPENDENT_PAPER_PLAN.md).
+
+A new strict [four-scenario factorial interaction calculator](src/grid_resilience/factorial_interactions.py) is available with regression tests. It requires **baseline, heat-only, wind-only and joint heat+wind** results for each identical event, BA and network variant; the current three-scenario results **cannot** identify the nonadditive compound interaction. Real 2024 BA geometry, transfer ratings and independent historical calibration remain outstanding. No new solved-factorial results are claimed yet.
+
 ## Geographic results — official US state basemap (2024)
 
 [**Figure release checklist: verified data, schematic geography, and rejected boundary claims**](reports/FIGURE_RELEASE_CHECKLIST.md)

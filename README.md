@@ -8,6 +8,9 @@ A reproducible, visualization-first demonstration of electricity adequacy under 
 
 ## Geographic results — official US state basemap (2024)
 
+**Repair-method sensitivity verified:** In historical HIFLD geometries, CISO's `make_valid()` and `buffer(0)` results differ by **12,628 km²** of symmetric-difference area; WACM **10,513 km²**, BPAT **4,886 km²**, WALC **4,074 km²**. These are **algorithmic differences, not observed territory changes**. No repaired polygon is approved as a 2024 BA boundary. [Read the topology-method comparison](reports/HIFLD_POLYGON_REPAIR_METHOD_COMPARISON.md).
+
+
 **Historical geometry QA completed:** 11 HIFLD candidate BA polygons examined; only 4 source polygons are geometrically valid (SRP, TEPC, PACE, IID). Seven are invalid; diagnostic repair changes CISO's area by approximately **-7.08%**, therefore automatically repaired geometry is **not** a validated boundary. See [verified geometry QA](reports/HIFLD_HISTORICAL_GEOMETRY_QA_RESULTS.md). The figures below remain state-basemap illustrations, not BA footprint maps.
 
 

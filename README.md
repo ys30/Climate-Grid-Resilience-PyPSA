@@ -6,6 +6,30 @@ A reproducible, visualization-first demonstration of electricity adequacy under 
 
 > **Current status (October 2026):** The repository now contains both the original synthetic demonstration and **successfully solved** EIA-930 demand + ERA5 weather + partial EIA-860 generator-only PyPSA experiments for a four-BA western-US subset. **The network topology, transfer limits, weather-response coefficients, generator availability and storage omissions remain illustrative.** These outputs are modeled shortfalls, not observed blackouts or validated grid-reliability forecasts. Some older sections below preserve the step-by-step development history.
 
+## Visual results and model geography
+
+The following **versioned SVG figures are stored in the repository**, so they render directly on GitHub without depending on expiring Actions artifacts.
+
+### Seasonal AZPS modeled shortage
+
+![AZPS four-season simulated shortages in MWh](figures/azps_four_season_shortfall.svg)
+
+Four independent sampled 2024 weeks. These figures describe **deterministic modeled unserved load**, not historical outages or whole-season reliability.
+
+### Sensitivity to assumed interties and thermal supply
+
+![Nine-case AZPS link versus thermal nameplate sensitivity heatmap](figures/azps_parameter_sensitivity.svg)
+
+Link transfer limits and thermal capacity multipliers are **unvalidated assumptions**. Neither axis represents a statistical confidence interval or actual transmission capacity.
+
+### Four-BA coordinate and network schematic
+
+![Representative weather coordinates and hypothetical intertie graph](figures/four_ba_topology_schematic.svg)
+
+This map-like schematic uses representative ERA5 point coordinates for BPAT, CISO, AZPS and SRP. Straight dashed connections are the model's three **hypothetical** links, not real transmission alignments, BA polygons or measured interchange.
+
+See [verified technical summary](reports/FINAL_TECHNICAL_SUMMARY.md) and associated Actions runs for data provenance and interpretation limitations.
+
 ## Verified research workflow and evidence (latest)
 
 | Component | Verified GitHub Actions run | Key finding and limitations |

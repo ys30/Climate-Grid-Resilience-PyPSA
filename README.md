@@ -62,9 +62,9 @@ Outputs: `outputs/shortfall_profiles.png`, `outputs/unserved_energy.png`, `outpu
 
 A 24-hour synthetic baseline load profile is scaled by a demand multiplier. Available supply is a constant 165 MW scaled by a supply-availability multiplier. Scenario assumptions are Baseline (1.00, 1.00), Heatwave (1.25, 0.90), and Compound stress (1.35, 0.72). Unserved power = max(demand − available supply, 0), in MW. For hourly intervals, summed unserved MW values correspond to MWh of unserved energy. These calculations are **simple adequacy arithmetic**, not optimal dispatch or a physical power-flow simulation. There are no transmission constraints, contingencies, storage, generator ramp rates, probabilities, or climate-attribution statements.
 
-## Next research phase
+## Historical roadmap (original synthetic phase)
 
-Add publicly licensed ERA5 weather and documented electricity demand/generation data, map temperature and wind/solar availability to physically meaningful profiles, and solve each case in PyPSA. Compare scenario outcomes with matching assumptions, explicit reliability metrics, sensitivity analysis, and regional maps. Avoid presenting scenario assumptions as measured climate impacts.
+The original planned extension was to add publicly licensed ERA5 weather and documented electricity demand/generation data, map temperature and wind/solar availability to physically meaningful profiles, and solve each case in PyPSA. Compare scenario outcomes with matching assumptions, explicit reliability metrics, sensitivity analysis, and regional maps. Avoid presenting scenario assumptions as measured climate impacts.
 
 ## Repository contents
 
@@ -93,7 +93,7 @@ New module: src/grid_resilience/western_us.py. The prototype models a **three-BA
     python -m grid_resilience.western_us --eia-csv data/external/EIA930_BALANCE_2024_Jul_Dec.csv --start 2024-07-01 --end 2024-07-08 --output outputs/western_us
     python -m pytest -q
 
-The EIA CSV filename above is an example only: use the actual filename the site supplies. Internet access is required to retrieve and cache ERA5. Real EIA-930 records and ERA5 responses are **not bundled**. No claim of a completed real-data optimization is made until the command succeeds.
+The EIA CSV filename above is an example only: use the actual filename the site supplies. Internet access is required to retrieve and cache ERA5. Real EIA-930 records and ERA5 responses are **not bundled**. **Historical note:** This command was originally proposed before the live GitHub Actions runs above succeeded. Consult the verified workflow table for the completed real-data results.
 
 Three experiments: observed_weather; heat_plus_4c; compound_heat_wind_derating (assumed +4°C, -30% wind, -35% intertie capability). Output is computed only after input validation and successful HiGHS optimization: scenario metrics, hourly hypothetical unserved demand, the aligned source inputs, provenance.json, and solved NetCDF networks. Unserved energy is modeled inadequacy, **not real outages**.
 
@@ -118,7 +118,7 @@ Use the resulting nameplate capacities in the existing EIA-930 + ERA5 scenario s
 
 The EIA-860 converter selects operational-status **OP** records only, joins generator and plant records using EIA plant IDs, preserves individual generator IDs, rejects duplicate rows, and exports a source-hash provenance manifest plus BA/technology nameplate totals. It **fails on unmapped fuel source codes** until the mapping has been explicitly reviewed and extended. EIA-860 spreadsheet layouts vary across editions; check actual column names and file headers before running. The converter is not a generator-location power flow model.
 
-**Important:** The solver's installed MW now come from EIA-860 when supplied, but its availability curves, weather derating assumptions, marginal costs, three-node link topology and intertie transfer limits remain illustrative. Hydro, nuclear and geothermal currently enter at constant maximum output; this should be replaced by appropriate operational time series. Storage and fuel technology types not explicitly handled must be modeled separately. EIA-860 is not an hourly forced-outage or plant availability dataset. **No completed empirical optimization or verified CI results are claimed in this commit.**
+**Important:** The solver's installed MW now come from EIA-860 when supplied, but its availability curves, weather derating assumptions, marginal costs, three-node link topology and intertie transfer limits remain illustrative. Hydro, nuclear and geothermal currently enter at constant maximum output; this should be replaced by appropriate operational time series. Storage and fuel technology types not explicitly handled must be modeled separately. EIA-860 is not an hourly forced-outage or plant availability dataset. **Historical note:** The EIA-860 phase originally preceded completed validation; the current verified four-BA workflows and their limitations are summarized above.
 
 A subsequent validation should reconcile EIA-860 BA installed MW with EIA-930 reported hourly generation and EIA-930 interchange, and replace the two hypothetical connections with licensed WECC line or interchange constraints.
 

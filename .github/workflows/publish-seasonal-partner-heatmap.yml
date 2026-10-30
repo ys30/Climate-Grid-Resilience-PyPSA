@@ -18,13 +18,14 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh run download 41080237502 --repo "${{ github.repository }}" --name azps-2024-four-season-boundary --dir downloaded
-          test -s downloaded/outputs/seasonal_partner_plots/azps_partner_exchange_heatmap.svg
-          test -s downloaded/outputs/seasonal_partner_plots/seasonal_partner_exchange.csv
+          find downloaded -type f | sort
+          test -n "$(find downloaded -name azps_partner_exchange_heatmap.svg -type f -size +0c -print -quit)"
+          test -n "$(find downloaded -name seasonal_partner_exchange.csv -type f -size +0c -print -quit)"
       - name: Commit verified heatmap and data
         run: |
           mkdir -p figures data/verified
-          cp downloaded/outputs/seasonal_partner_plots/azps_partner_exchange_heatmap.svg figures/
-          cp downloaded/outputs/seasonal_partner_plots/seasonal_partner_exchange.csv data/verified/
+          cp "$(find downloaded -name azps_partner_exchange_heatmap.svg -type f -print -quit)" figures/
+          cp "$(find downloaded -name seasonal_partner_exchange.csv -type f -print -quit)" data/verified/
           python - <<'PY'
           from pathlib import Path
           import csv

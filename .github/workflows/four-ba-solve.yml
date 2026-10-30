@@ -6,6 +6,7 @@ on:
     paths:
       - '.github/workflows/four-ba-solve.yml'
       - 'src/grid_resilience/four_ba.py'
+      - 'src/grid_resilience/plot_hourly_shortfall.py'
       - 'src/grid_resilience/western_us.py'
       - 'src/grid_resilience/capacity_projection.py'
       - 'tests/test_four_ba.py'
@@ -50,6 +51,8 @@ jobs:
             --capacities data/processed/four_ba_projection/modeled_nameplate_only.csv \
             --start 2024-07-01 --end 2024-07-08 \
             --output outputs/four_ba --cache data/cache
+      - name: Plot verified hourly AZPS shortage from solved networks
+        run: python -m grid_resilience.plot_hourly_shortfall --input outputs/four_ba --output outputs/four_ba/figures
       - name: Save data and model results
         if: always()
         uses: actions/upload-artifact@v4

@@ -8,6 +8,10 @@ A reproducible, visualization-first demonstration of electricity adequacy under 
 
 ## Geographic results — official US state basemap (2024)
 
+> **Geographic accuracy warning:** These state-basemap figures do **not** depict BA service-territory polygons or physical transmission routes. An AI-generated colorful map depicting WALC as Washington Area, TEPC in Mexico, the entire state of Arizona as AZPS, or seven uniformly outward partner arrows is **incorrect and rejected**. Read the [map accuracy audit](reports/MAP_ACCURACY_AUDIT.md) before reuse.
+
+
+
 **[Map provenance, source shapefile and reproduction notes](reports/GEOGRAPHIC_FIGURES_PROVENANCE.md)** — geographic layer from US Census 2024, BA weather-proxy points, not actual BA territory polygons.
 
 

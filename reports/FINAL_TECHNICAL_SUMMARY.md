@@ -19,6 +19,16 @@ The following SVGs are versioned in Git and render directly in GitHub.
 
 **Map limitation:** Representative sampling point locations only, not balancing-authority boundaries or physical transmission line paths. **Chart limitation:** Numbers are verified deterministic model outcomes, not historical blackouts.
 
+### Geographic figures with 2024 US Census state boundaries
+
+![Four-BA illustrative links on genuine 2024 state basemap](../figures/four_ba_census_states_map.svg)
+
+![Modeled versus omitted AZPS reported trading partners](../figures/azps_boundary_coverage_census_map.svg)
+
+![Winter, spring, summer and autumn sampled-week external net exports](../figures/azps_four_season_census_maps.svg)
+
+**Geographic evidence boundary:** Census state outlines are geographic data; BA dots are representative ERA5 sampling coordinates, not actual BA footprints. Dashed model edges are schematic and partner locations are not fabricated. Seasonal annotations represent separate sampled weeks rather than entire seasons.
+
 ## Research questions
 
 1. How sensitive are modeled hourly resource-adequacy shortages to stylized hot-weather and compound stress?

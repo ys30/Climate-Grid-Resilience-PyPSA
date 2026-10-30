@@ -29,6 +29,12 @@ The following SVGs are versioned in Git and render directly in GitHub.
 
 **Geographic evidence boundary:** Census state outlines are geographic data; BA dots are representative ERA5 sampling coordinates, not actual BA footprints. Dashed model edges are schematic and partner locations are not fabricated. Seasonal annotations represent separate sampled weeks rather than entire seasons.
 
+### Verified partner-by-season exchange direction
+
+![Per-partner AZPS EIA-930 net imports and exports, by sampled week](../figures/azps_partner_exchange_heatmap.svg)
+
+The underlying [audited per-partner CSV](../data/verified/seasonal_partner_exchange.csv) preserves per-partner sign; positive values are imports to AZPS and negative values exports from AZPS. The overall combined outside-boundary net export **does not** imply every reported counterpart is an export destination.
+
 ## Research questions
 
 1. How sensitive are modeled hourly resource-adequacy shortages to stylized hot-weather and compound stress?

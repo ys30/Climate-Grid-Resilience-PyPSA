@@ -29,6 +29,7 @@ A reproducible, visualization-first demonstration of electricity adequacy under 
 - [Observed/model flow mismatch](reports/2024-07-srp-flow-validation-observed-mismatch.md)
 - [External-boundary obligation sensitivity](reports/2024-07-azps-external-export-sensitivity-verified.md)
 - [Demand and interchange accounting review](reports/eia930-demand-interchange-accounting-review.md)
+- [Four-BA link × thermal-nameplate parameter sensitivity](reports/2024-07-four-ba-parameter-sensitivity-verified.md)
 
 ### Remaining work before quantitative reliability claims
 

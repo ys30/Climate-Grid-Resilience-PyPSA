@@ -1,0 +1,28 @@
+name: Audit candidate BA polygon GIS sources
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/ba-polygon-source-audit.yml'
+      - 'src/grid_resilience/ba_polygon_source_audit.py'
+jobs:
+  audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Inspect official/candidate GIS layer schemas and BA codes
+        run: PYTHONPATH=src python -m grid_resilience.ba_polygon_source_audit --output outputs/ba_polygon_source_audit
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ba-polygon-source-inventory
+          if-no-files-found: warn
+          retention-days: 30
+          path: outputs/ba_polygon_source_audit/

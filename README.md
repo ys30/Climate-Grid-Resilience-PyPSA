@@ -21,6 +21,10 @@ A reproducible, visualization-first demonstration of electricity adequacy under 
 
 **Research conclusions must distinguish:** observed EIA-930 BA reporting, official EIA-860 nameplate capacity, ERA5 historical weather, and **hypothetical dispatch/network assumptions**. The model is useful for research methodology, data provenance and structural/parameter sensitivity; it is **not** validated to predict physical interchange or actual outage rates.
 
+### Consolidated technical summary
+
+**[Read the verified technical research summary](reports/FINAL_TECHNICAL_SUMMARY.md)** for study scope, observed-data provenance, quantitative results, major model calibration failures and reproducibility links.
+
 ### Verified reports
 
 - [Four-season modeled shortfalls](reports/2024-four-season-four-ba-adequacy-verified.md)

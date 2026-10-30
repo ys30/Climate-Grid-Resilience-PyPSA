@@ -6,6 +6,26 @@ A reproducible, visualization-first demonstration of electricity adequacy under 
 
 > **Current status (October 2026):** The repository now contains both the original synthetic demonstration and **successfully solved** EIA-930 demand + ERA5 weather + partial EIA-860 generator-only PyPSA experiments for a four-BA western-US subset. **The network topology, transfer limits, weather-response coefficients, generator availability and storage omissions remain illustrative.** These outputs are modeled shortfalls, not observed blackouts or validated grid-reliability forecasts. Some older sections below preserve the step-by-step development history.
 
+## Geographic results — official US state basemap (2024)
+
+These figures use the **US Census Bureau 2024 cartographic state boundaries**. BA dots are **representative ERA5 sampling points, not official BA centers or polygons**. Straight lines are **assumed model connections**, not physical transmission routes.
+
+### Four-BA network on the western US state basemap
+
+![Four BA model node locations over the US Census 2024 state basemap](figures/four_ba_census_states_map.svg)
+
+### Modeled AZPS connections versus omitted EIA-930 exchange partners
+
+![AZPS modeled links and seven additional observed interchange counterparties](figures/azps_boundary_coverage_census_map.svg)
+
+The seven nonmodeled partners are listed rather than plotted at invented coordinates.
+
+### Four sampled-week AZPS exchange maps
+
+![Four-season sampled AZPS reported net exports to omitted BAs](figures/azps_four_season_census_maps.svg)
+
+Winter, spring, summer and autumn panels cover **one week each** in 2024, not full-season totals. All shown quantities are **reported BA interchange**, not physically routed line flows. Source: [four-season audit](reports/2024-azps-four-season-boundary-verified.md).
+
 ## Visual results and model geography
 
 The following **versioned SVG figures are stored in the repository**, so they render directly on GitHub without depending on expiring Actions artifacts.

@@ -6,6 +6,7 @@ on:
     paths:
       - '.github/workflows/azps-seasonal-boundary.yml'
       - 'src/grid_resilience/azps_seasonal_boundary.py'
+      - 'src/grid_resilience/plot_seasonal_partner_exchange.py'
       - 'src/grid_resilience/azps_boundary_coverage.py'
       - 'tests/test_azps_seasonal_boundary.py'
 jobs:
@@ -34,6 +35,8 @@ jobs:
       - name: Compare seasonal hourly boundary signs and magnitudes
         run: |
           python -m grid_resilience.azps_seasonal_boundary --root outputs/seasonal_input --output outputs/seasonal_azps
+      - name: Plot individual omitted BA partner import/export by season
+        run: python -m grid_resilience.plot_seasonal_partner_exchange --root outputs/seasonal_input --output outputs/seasonal_partner_plots
       - name: Publish auditable seasonal results
         if: always()
         uses: actions/upload-artifact@v4
@@ -44,3 +47,4 @@ jobs:
           path: |
             outputs/seasonal_input/
             outputs/seasonal_azps/
+            outputs/seasonal_partner_plots/
